@@ -1,41 +1,47 @@
 // ==========================================
-// 🛡️ THE HIJACKER: EVENT INTERCEPTION TECH
+// 🛡️ INDIPLEX: THE VIRTUAL BYPASS (V9)
 // ==========================================
 
 (function() {
-    // 1. HIJACKING THE BROWSER'S EAR (addEventListener)
-    const originalAddEventListener = EventTarget.prototype.addEventListener;
-    
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
-        if (type === 'click' || type === 'mousedown' || type === 'mouseup') {
-            const wrappedListener = function(e) {
-                // Agar click kisi aisi jagah ho raha hai jo player nahi hai...
-                // Aur wo click ad-related domains ya popups trigger kar raha hai...
-                if (e.target && !e.target.closest('#main-player') && !e.target.closest('#episode-grid')) {
-                    const isShady = /pop|click|ad|link/i.test(e.target.className + e.target.id);
-                    if (isShady) {
-                        console.log("🛡️ Hijacker: Neutralized a shady event.");
-                        e.stopImmediatePropagation(); // Event ko yahi khatam karo
-                        return;
-                    }
-                }
-                // Agar sab theek hai, toh original function chalne do
-                return listener.apply(this, arguments);
-            };
-            return originalAddEventListener.call(this, type, wrappedListener, options);
-        }
-        return originalAddEventListener.call(this, type, listener, options);
+    // 1. FAKE POPUP SIGNAL (The Master Key)
+    // Hum window.open ko modify karenge taaki wo "Success" return kare par khule kuch nahi
+    const originalOpen = window.open;
+    window.open = function(url, target, features) {
+        console.log("🛡️ Hijacked Popup Request to:", url);
+        
+        // Hum ek fake window object return karenge 
+        // Taaki unka script crash na ho aur samjhe ki popup khul gaya
+        return {
+            closed: true,
+            focus: function() {},
+            blur: function() {},
+            close: function() {}
+        };
     };
 
-    // 2. THE "FAKE-AD" FLAG (Bypassing Anti-Adblock)
-    // Ye code player ko jhoot bolega ki "Haan, ad chal raha hai"
-    window.canRunAds = true;
-    window.isAdBlocked = false;
-    window.adsAllowed = true;
+    // 2. RE-ENABLE POINTER EVENTS (Hard Reset)
+    // Player ke upar ki har cheez ko "Ghost" banao
+    const forceClick = () => {
+        const player = document.getElementById('main-player');
+        if (player) {
+            player.style.pointerEvents = 'auto';
+            player.style.zIndex = '9999';
+        }
+
+        // Saari invisible layers ko disable karo jo click rok rahi hain
+        document.querySelectorAll('div').forEach(div => {
+            const style = window.getComputedStyle(div);
+            if (style.position === 'fixed' && !div.id.includes('app')) {
+                div.style.pointerEvents = 'none';
+                div.style.zIndex = '-1';
+            }
+        });
+    };
+    setInterval(forceClick, 500);
 })();
 
 // ==========================================
-// 🎬 INDIPLEX CORE (No Features Skipped)
+// 🎬 INDIPLEX CORE (Preserving Everything)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -52,14 +58,17 @@ async function loadEpisodes(seasonNum) {
     grid.innerHTML = ''; 
     data.episodes.forEach(epi => {
         const card = document.createElement('div');
-        card.className = 'episode-card tilt-effect rgb-glow'; // 3D/RGB Effects
+        card.className = 'episode-card tilt-effect rgb-glow'; // 3D/RGB Effects Intact
         card.innerHTML = `
             ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
             <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
-            <div class="epi-info">
-                <div class="epi-title">E${epi.episode_number}</div>
-            </div>`;
-        card.onclick = () => { currentE = epi.episode_number; updatePlayer(); loadEpisodes(currentS); };
+            <div class="epi-info"><div class="epi-title">E${epi.episode_number}</div></div>`;
+        
+        card.onclick = () => {
+            currentE = epi.episode_number;
+            updatePlayer();
+            loadEpisodes(currentS);
+        };
         grid.appendChild(card);
     });
 }
@@ -81,11 +90,6 @@ function switchServer(s) {
     });
     updatePlayer(); 
 }
-
-// Global Purge (Cleanup unwanted scripts)
-setInterval(() => {
-    document.querySelectorAll('script[src*="frs2c"], script[src*="wiestunvote"]').forEach(s => s.remove());
-}, 2000);
 
 document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
