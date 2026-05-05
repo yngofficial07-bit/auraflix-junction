@@ -1,53 +1,42 @@
 // ==========================================
-// 🛡️ OMNI-BYPASS: CLICK-THROUGH + SIPHON
+// 🛡️ OMNI-BYPASS: CLICK-THROUGH (NO SANDBOX)
 // ==========================================
 
 const bypassShield = () => {
-    // 1. Sabhi possible ad-layers ko 'Click-Through' banao (Intact)
+    // 1. Ad-layers ko transparent aur click-through banao
     const selectors = 'div, iframe, ins, section, a';
     document.querySelectorAll(selectors).forEach(el => {
-        const isSafe = el.id === 'app' || 
-                       el.id === 'main-player' || 
-                       el.closest('#episode-grid') || 
-                       el.closest('.server-options') ||
+        const isSafe = el.id === 'app' || el.id === 'main-player' || 
+                       el.closest('#episode-grid') || el.closest('.server-options') ||
                        el.classList.contains('rgb-glow');
 
         if (!isSafe) {
             const style = window.getComputedStyle(el);
             if (style.position === 'fixed' || style.position === 'absolute' || parseInt(style.zIndex) > 1) {
                 el.style.pointerEvents = 'none'; 
-                el.style.userSelect = 'none';
                 el.style.opacity = '0'; 
             }
         }
     });
 
-    // 2. EXTERNAL CONTROL BRIDGE (The Siphon)
+    // 2. Player settings (Removed Sandbox for full compatibility)
     const player = document.getElementById('main-player');
     if (player) {
         player.style.pointerEvents = 'auto';
-        player.style.zIndex = '100'; 
-        
-        // Anti-Popup Lock: Player ko bolenge ki wo popup na khole
-        player.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-presentation');
-        
-        // Faking User Activation: Kuch servers click mangte hain, hum fake signal bhejenge
-        if (player.contentWindow) {
-            player.contentWindow.userActivated = true;
-        }
+        player.style.zIndex = '100';
     }
 };
 
-// POPUP KILLER: Direct attack on popup generation
+// POPUP LOCKER: Popup requests ko yahi neutralize karo
 window.open = function() { 
-    console.log("🛡️ Siphon: Popup request neutralized.");
+    console.log("🚫 Popup Attempted & Blocked");
     return { closed: true, focus: () => {}, close: () => {} }; 
 };
 
 setInterval(bypassShield, 100);
 
 // ==========================================
-// 🎬 INDIPLEX CORE: ALL FEATURES LOCKED
+// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -65,16 +54,15 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 3D & RGB EFFECTS PRESERVED
-            card.className = 'episode-card tilt-effect rgb-glow'; 
+            card.className = 'episode-card tilt-effect rgb-glow'; // 💎 Animations Intact
             
             card.innerHTML = `
                 ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
                 <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
                 <div class="epi-info">
                     <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                </div>
-            `;
+                </div>`;
+            
             card.onclick = (e) => {
                 e.preventDefault();
                 currentE = epi.episode_number;
@@ -94,10 +82,11 @@ function updatePlayer() {
         moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
         videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
+    
     if (player) {
         player.src = urls[currentServer];
-        // Autocomplete focus for external controls
-        player.focus();
+        // Focus player for Keyboard signals
+        player.onload = () => { player.focus(); };
     }
 }
 
