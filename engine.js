@@ -1,62 +1,56 @@
 // ==========================================
-// 🛡️ INDIPLEX DOMAIN-TARGETED SHIELD
+// 🛡️ AURA-BRAVE STEALTH ENGINE (ANTI-AD/POPUP)
 // ==========================================
 
-// Saare links jo tune bheje unka nichod (Pattern Matching)
 const AD_PATTERNS = [
     /oundhertobeconsist/i, /frs2c/i, /v2006/i, /wiestunvote/i, 
     /painamour/i, /twasmerelyhers/i, /milvussorel/i, /havingwacks/i,
-    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i
+    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i,
+    /syndication/i, /doubleclick/i, /adservice/i
 ];
 
-// 1. GLOBAL NETWORK INTERCEPTOR (Popups ka baap)
-window.open = function(url) {
-    console.log("🚫 Aura Shield: Blocked redirect to ->", url);
-    return null; 
-};
+// 1. POPUP KILLER
+window.open = function() { return null; };
 
-// 2. ACTIVE ELEMENT DESTRUCTION (Jo tune video mein dikhaya)
+// 2. DOMAIN & OVERLAY PURGE
 const neutralizeAds = () => {
     const player = document.getElementById('main-player');
-    
-    // Sabhi elements check karo jo player ke bahar hain
+    const app = document.getElementById('app');
+
     document.querySelectorAll('a, iframe, div, ins, script').forEach(el => {
-        if (el === player || el.id === 'main-player' || el.closest('#episode-grid')) return;
+        if (el === player || el.id === 'main-player' || el.closest('#episode-grid') || (app && app.contains(el))) return;
 
         const content = (el.src || el.href || el.outerHTML || '').toLowerCase();
         
-        // Agar element hamari blacklist se match hota hai
+        // Target specific ad domains from your links
         if (AD_PATTERNS.some(pattern => pattern.test(content))) {
-            console.log("🛡️ Shield: Neutralized ad domain element");
             el.remove();
         }
 
-        // Invisible layers jo click chura rahi hain
+        // Auto-remove invisible blocking layers
         const style = window.getComputedStyle(el);
         if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex) > 10) {
-            if (!el.contains(player)) {
-                el.style.pointerEvents = 'none'; // Click ko aar-paar jaane do
-                el.style.display = 'none';
-                el.remove();
-            }
+            el.style.pointerEvents = 'none'; 
+            el.style.display = 'none';
+            el.remove();
         }
     });
 };
 
-// 3. REAL-TIME PROTECTION (Har 300ms mein scan)
 setInterval(neutralizeAds, 300);
 
 // ==========================================
-// 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
+// 🎬 INDIPLEX CORE LOGIC (TMDB & SERVERS)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; // Stranger Things
+const TMDB_ID = '66732'; 
 
 let currentS = 1;
 let currentE = 1;
 let currentServer = 'vidsrc';
 
+// 3. LOAD EPISODES (With 3D Hover & RGB Intact)
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
@@ -67,6 +61,7 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
+            // 'Ek Number' Effects: 3D Hover & RGB Glow
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -91,6 +86,7 @@ async function loadEpisodes(seasonNum) {
     }
 }
 
+// 4. SERVER SWITCHER & PLAYER UPDATE
 function updatePlayer() {
     const player = document.getElementById('main-player');
     const urls = {
@@ -104,15 +100,19 @@ function updatePlayer() {
     }
 }
 
+// Ye raha Server UI wala part jo skip ho gaya tha
 function switchServer(s) { 
     currentServer = s; 
     document.querySelectorAll('.server-btn').forEach(btn => {
         btn.classList.remove('active');
-        if(btn.innerText.toLowerCase().includes(s)) btn.classList.add('active');
+        // Match server name to button text
+        if(btn.innerText.toLowerCase().includes(s)) {
+            btn.classList.add('active');
+        }
     });
     updatePlayer(); 
 }
 
-// Start the Engine
+// Initialization
 loadEpisodes(1);
 updatePlayer();
