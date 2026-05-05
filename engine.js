@@ -1,5 +1,5 @@
 // ==========================================
-// 🛡️ AURA-BRAVE GLASS SHIELD ENGINE
+// 🛡️ AURA-BRAVE STEALTH BYPASS ENGINE
 // ==========================================
 
 const BLACKLISTED_DOMAINS = [
@@ -8,80 +8,58 @@ const BLACKLISTED_DOMAINS = [
     'pop', 'xtra', 'click', 'double', 'adsystem', 'syndication', 'doubleclick'
 ];
 
-// 1. DYNAMIC CSS INJECTOR (Shield & Animations ke liye)
-const style = document.createElement('style');
-style.textContent = `
-    .glass-shield {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 2000000;
-        background: transparent;
-        cursor: pointer;
-    }
-    #main-player {
-        z-index: 10;
-        position: relative;
-    }
-`;
-document.head.appendChild(style);
+// 1. SMART CLICK-THROUGH (Click block nahi hoga)
+document.addEventListener('mousedown', (e) => {
+    const player = document.getElementById('main-player');
+    const target = e.target;
 
-// 2. THE GLASS SHIELD LOGIC
-// Ye player par hone wale pehle 'khatarnak' click ko block karega
-const applyGlassShield = () => {
-    const playerContainer = document.querySelector('.video-container') || document.body;
-    const existingShield = document.querySelector('.glass-shield');
-    
-    if (!existingShield) {
-        const shield = document.createElement('div');
-        shield.className = 'glass-shield';
-        
-        shield.addEventListener('click', (e) => {
-            console.log("🛡️ Shield: First click intercepted & neutralized!");
-            e.preventDefault();
-            e.stopPropagation();
-            shield.remove(); // Pehla click "kha" kar shield hat jayegi
-        }, true);
+    // Agar click player par nahi hai, aur target element poori screen cover kar raha hai (Ads ki nishani)
+    if (player && target !== player && !player.contains(target)) {
+        const style = window.getComputedStyle(target);
+        if (style.position === 'absolute' || style.position === 'fixed') {
+            if (parseInt(style.zIndex) > 10) {
+                console.log("🛡️ Stealth: Ad layer detected. Bypassing...");
+                
+                // Magic Line: Click ko layer ke "aar-paar" bhejta hai
+                target.style.pointerEvents = 'none'; 
+                
+                // Layer ko 100ms baad uda do taki user ko pata bhi na chale
+                setTimeout(() => { if(target.parentNode) target.remove(); }, 100);
+            }
+        }
+    }
+}, true);
 
-        playerContainer.style.position = 'relative';
-        playerContainer.appendChild(shield);
+// 2. NETWORK & POP-UP KILLER
+window.open = function() { return null; };
+
+const auraClean = () => {
+    // 1. Blacklisted domains ko udao
+    document.querySelectorAll('iframe, script, a').forEach(el => {
+        if (el.id === 'main-player') return;
+        const src = el.src || el.href || '';
+        if (BLACKLISTED_DOMAINS.some(d => src.toLowerCase().includes(d))) {
+            el.remove();
+        }
+    });
+
+    // 2. Player ki priority top par rakho
+    const player = document.getElementById('main-player');
+    if (player) {
+        player.style.zIndex = "9999";
+        player.style.position = "relative";
     }
 };
 
-// 3. MUTATION OBSERVER (Ads aate hi unhe "mote" marna)
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) { // Element node
-                const source = node.src || node.href || node.id || node.className || '';
-                const isAd = BLACKLISTED_DOMAINS.some(d => source.toLowerCase().includes(d));
-                
-                // Agar koi bada div player ke upar aa raha hai
-                const style = window.getComputedStyle(node);
-                const isOverlay = (style.position === 'absolute' || style.position === 'fixed') && parseInt(style.zIndex) > 100;
-
-                if (isAd || (isOverlay && node.id !== 'app' && node.id !== 'main-player')) {
-                    node.remove();
-                    console.log("🛡️ Shield: Auto-removed ad element");
-                }
-            }
-        });
-    });
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
-// 4. BRAVE-STYLE POP-UP KILLER
-window.open = function() { return null; };
-
-// Har 500ms mein shield check karo
-setInterval(applyGlassShield, 500);
+// Har 400ms mein safai
+setInterval(auraClean, 400);
 
 // ==========================================
 // 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; // Stranger Things
+const TMDB_ID = '66732'; // Stranger Things example
 
 let currentS = 1;
 let currentE = 1;
@@ -97,7 +75,7 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // Keep 3D/RGB Animations intact
+            // 3D Hover & RGB Effects Intact (Ek Number!)
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -114,12 +92,11 @@ async function loadEpisodes(seasonNum) {
                 currentE = epi.episode_number;
                 updatePlayer();
                 loadEpisodes(currentS); 
-                applyGlassShield(); // Har naye episode par shield wapas lagao
             };
             grid.appendChild(card);
         });
     } catch (err) {
-        console.error("Error loading episodes:", err);
+        console.error("TMDB Load Error");
     }
 }
 
@@ -140,9 +117,8 @@ function switchServer(s) {
         if(btn.innerText.toLowerCase().includes(s)) btn.classList.add('active');
     });
     updatePlayer(); 
-    applyGlassShield(); // Server change par bhi shield lagao
 }
 
-// Start the engine
+// Initial Start
 loadEpisodes(1);
 updatePlayer();
