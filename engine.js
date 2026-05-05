@@ -1,43 +1,61 @@
 // ==========================================
-// 🛡️ OMNI-BYPASS: CLICK-THROUGH (NO SANDBOX)
+// 🛡️ THE ANTI-MATTER SHIELD (NO-LIMIT BLOCKER)
 // ==========================================
 
-const bypassShield = () => {
-    // 1. Ad-layers ko transparent aur click-through banao
-    const selectors = 'div, iframe, ins, section, a';
-    document.querySelectorAll(selectors).forEach(el => {
-        const isSafe = el.id === 'app' || el.id === 'main-player' || 
-                       el.closest('#episode-grid') || el.closest('.server-options') ||
-                       el.classList.contains('rgb-glow');
+(function() {
+    // 1. BLACKLIST: Saare gande domains ko block karo
+    const adDomains = [
+        'proads.tld', 'onclickalgo.com', 'vidsrc.me/ads', 
+        'rhtads.com', 'mndsrv.com', 'popads.net', 'bit.ly',
+        'doubleclick.net', 'google-analytics.com'
+    ];
 
-        if (!isSafe) {
-            const style = window.getComputedStyle(el);
-            if (style.position === 'fixed' || style.position === 'absolute' || parseInt(style.zIndex) > 1) {
-                el.style.pointerEvents = 'none'; 
-                el.style.opacity = '0'; 
-            }
+    // 2. NETWORK LEVEL BLOCKING (Brave Tech)
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        if (adDomains.some(domain => arguments[0].includes(domain))) {
+            return Promise.reject(new Error("🛡️ INDIPLEX: Blocked Ad Request"));
         }
+        return originalFetch.apply(this, arguments);
+    };
+
+    // 3. DOM SURVEILLANCE: Agar koi naya ad banne ki koshish kare, turant delete
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                    const isAd = node.tagName === 'IFRAME' && !node.id.includes('main-player') ||
+                                 /pop|ads|banner|promo/i.test(node.className + node.id) ||
+                                 node.style.zIndex > 1000;
+                    
+                    if (isAd) {
+                        node.style.display = 'none';
+                        node.remove();
+                    }
+                }
+            });
+        });
     });
 
-    // 2. Player settings (Removed Sandbox for full compatibility)
-    const player = document.getElementById('main-player');
-    if (player) {
-        player.style.pointerEvents = 'auto';
-        player.style.zIndex = '100';
-    }
-};
+    observer.observe(document.body, { childList: true, subtree: true });
 
-// POPUP LOCKER: Popup requests ko yahi neutralize karo
-window.open = function() { 
-    console.log("🚫 Popup Attempted & Blocked");
-    return { closed: true, focus: () => {}, close: () => {} }; 
-};
-
-setInterval(bypassShield, 100);
+    // 4. POPUP EXTINCTION
+    window.open = () => ({ closed: true, focus: () => {}, close: () => {} });
+    
+    // 5. CLICK HIJACK RECOVERY
+    setInterval(() => {
+        const player = document.getElementById('main-player');
+        if (player) {
+            player.style.pointerEvents = 'auto';
+            player.style.zIndex = '2147483647'; // Highest possible z-index
+        }
+    }, 500);
+})();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
+// 🎬 INDIPLEX CORE: 100% PRESERVED
 // ==========================================
+// Ryzen/RTX Build Power | Android Dev Java Spirit
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
@@ -54,7 +72,8 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            card.className = 'episode-card tilt-effect rgb-glow'; // 💎 Animations Intact
+            // 💎 NO SKIPS: 3D Hover & RGB Glow Intact
+            card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
                 ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
@@ -85,8 +104,8 @@ function updatePlayer() {
     
     if (player) {
         player.src = urls[currentServer];
-        // Focus player for Keyboard signals
-        player.onload = () => { player.focus(); };
+        // Autocomplete focus for Keyboard signals (Space/Arrows)
+        player.focus();
     }
 }
 
@@ -101,4 +120,5 @@ function switchServer(s) {
 document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
     updatePlayer();
+    console.log("⚡ INDIPLEX: Anti-Matter Shield Active.");
 });
