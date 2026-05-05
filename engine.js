@@ -16,13 +16,33 @@ const adNuker = new MutationObserver(() => {
 
 adNuker.observe(document.body, { childList: true, subtree: true });
 
-// 2. Window Open Block (Brave ka main feature)
-// Isse naye tabs/windows khulna band ho jayenge
-window.open = function() { 
-    console.log("AuraFlix Shield: Pop-up blocked!");
-    return null; 
-};
+// 1. Smart Sniper: Pop-up khulega par turant "Kill" ho jayega
+window.open = (function(origOpen) {
+    return function(url, name, features) {
+        console.log("AuraFlix Shield: Pop-up detected & neutralizing...");
+        
+        // Asli window kholo
+        const newWin = origOpen.apply(window, arguments);
+        
+        // Agar window khul gayi, toh use 100ms mein band kar do
+        if (newWin) {
+            setTimeout(() => {
+                newWin.close();
+                console.log("AuraFlix Shield: Pop-up Terminated.");
+                window.focus(); // Focus wapas apni site pr
+            }, 100); 
+        }
+        return newWin;
+    };
+})(window.open);
 
+// 2. Sandboxing (Iframe safety)
+// Isse iframe ke andar se hone wale automatic redirects ruk jayenge
+const playerIframe = document.getElementById('main-player');
+if (playerIframe) {
+   playerIframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-presentation allow-popups');
+    // 'allow-popups' hata diya taaki iframe khud se kuch na khol sake
+}
 
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
