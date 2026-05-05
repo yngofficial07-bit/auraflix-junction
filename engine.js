@@ -1,95 +1,102 @@
-// 1. BRAVE-STYLE DOMAIN FILTER
+// 1. BLACKLISTED DOMAINS
 const BLACKLISTED_DOMAINS = [
     '1xbet', 'oundhertobeconsist', 'muralssouth', 'polosanitizertrusting', 
-    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash'
+    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash', 'syndication'
 ];
 
-// 2. NETWORK INTERCEPTOR
+// 2. AURA CLICK-RADAR (Sabse Powerful)
+// Ye har us invisible layer ko detect karega jo click rok rahi hai
+document.addEventListener('mousedown', (e) => {
+    const target = e.target;
+    const player = document.getElementById('main-player');
+
+    // Agar click player par nahi hai, par layer poori screen cover kar rahi hai
+    if (target !== player && (target.offsetWidth >= window.innerWidth * 0.5)) {
+        console.log("🛡️ Shield: Blocking Ghost Layer detected!");
+        
+        // Trick: Click ko layer ke "aar-paar" jaane do (Pointer Events None)
+        target.style.pointerEvents = 'none'; 
+        
+        // Aur us layer ko uda do
+        setTimeout(() => {
+            if (target && target.parentNode) target.remove();
+        }, 100);
+    }
+}, true);
+
+// 3. THE ELEMENT KILLER
 const killAds = () => {
-    const allLinks = document.querySelectorAll('a, iframe, script');
-    allLinks.forEach(el => {
-        const url = el.src || el.href || '';
-        const foundDomain = BLACKLISTED_DOMAINS.find(d => url.includes(d));
-        if (foundDomain) {
-            console.log(`🛡️ Aura Shield: Blocked ${foundDomain}`);
+    document.querySelectorAll('iframe, script, a, div').forEach(el => {
+        if (el.id === 'main-player') return;
+        const source = el.src || el.href || el.id || el.className || '';
+        if (BLACKLISTED_DOMAINS.some(domain => source.toLowerCase().includes(domain))) {
             el.remove();
         }
     });
 };
 
-// 3. THE "GHOST" LAYER KILLER (REPLACED VERSION)
+// 4. SMART OVERLAY REMOVER
 const removeOverlays = () => {
     const children = document.body.children;
     for (let i = 0; i < children.length; i++) {
         const el = children[i];
-        
-        // App aur Player ko safe rakho
-        if (el.id === 'app' || el.id === 'main-player' || el.contains(document.getElementById('main-player'))) {
-            continue;
-        }
+        if (el.id === 'app' || el.id === 'main-player' || el.contains(document.getElementById('main-player'))) continue;
 
         const style = window.getComputedStyle(el);
         if (style.position === 'absolute' || style.position === 'fixed') {
-            // Sirf bade invisible layers ko hatao jo click rok rahe hain
-            const isFullWidth = el.offsetWidth >= window.innerWidth * 0.9;
-            if (parseInt(style.zIndex) > 50 && isFullWidth) {
-                console.log("🛡️ Shield: Removed blocking ad-layer");
+            if (parseInt(style.zIndex) > 10) {
                 el.remove();
             }
         }
     }
 };
 
-// 4. POP-UP HIJACKER (SMART VERSION)
-window.open = function(url) {
-    if (url && BLACKLISTED_DOMAINS.some(domain => url.includes(domain))) {
-        console.log("🚫 Brave Mode: Pop-up blocked!");
-        return null;
-    }
-    return null; 
-};
+// Brave Style Pop-up Blocker
+window.open = function() { return null; };
 
-// Scan timing
+// Har 400ms mein scan
 setInterval(() => {
     killAds();
     removeOverlays();
-}, 500);
+}, 400);
 
-// ============================================================
-// 🎬 TMDB & SERVER LOGIC
-// ============================================================
+// ==========================================
+// 🎬 TMDB & SERVER LOGIC (NEET Aspirant's Core)
+// ==========================================
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
-    const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
-    const data = await response.json();
-    const grid = document.getElementById('episode-grid');
-    grid.innerHTML = ''; 
+    try {
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
+        const data = await response.json();
+        const grid = document.getElementById('episode-grid');
+        grid.innerHTML = ''; 
 
-    data.episodes.forEach(epi => {
-        const card = document.createElement('div');
-        card.className = 'episode-card tilt-effect rgb-glow'; 
-        const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
-        
-        card.innerHTML = `
-            ${playingBadge}
-            <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
-            <div class="epi-info">
-                <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                <div class="epi-meta">${epi.runtime || '--'} min</div>
-            </div>
-        `;
-        
-        card.onclick = () => {
-            currentE = epi.episode_number;
-            updatePlayer();
-            loadEpisodes(currentS); 
-        };
-        grid.appendChild(card);
-    });
+        data.episodes.forEach(epi => {
+            const card = document.createElement('div');
+            card.className = 'episode-card tilt-effect rgb-glow'; 
+            const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
+            
+            card.innerHTML = `
+                ${playingBadge}
+                <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
+                <div class="epi-info">
+                    <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
+                    <div class="epi-meta">${epi.runtime || '--'} min</div>
+                </div>
+            `;
+            
+            card.onclick = () => {
+                currentE = epi.episode_number;
+                updatePlayer();
+                loadEpisodes(currentS); 
+            };
+            grid.appendChild(card);
+        });
+    } catch(e) { console.log("TMDB Error"); }
 }
 
 function updatePlayer() {
