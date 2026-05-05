@@ -1,65 +1,63 @@
 // ==========================================
-// 🛡️ AURA-BRAVE STEALTH BYPASS ENGINE
+// 🛡️ AURA-BRAVE STEALTH ENGINE (ANTI-POPUP)
 // ==========================================
 
 const BLACKLISTED_DOMAINS = [
     '1xbet', 'oundhertobeconsist', 'muralssouth', 'polosanitizertrusting', 
     'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash',
-    'pop', 'xtra', 'click', 'double', 'adsystem', 'syndication', 'doubleclick'
+    'v2006', 'painamour', 'twasmeerelyhers', 'wiestunvote', 'raklls', 'syndication',
+    'adservice', 'doubleclick', 'adnxs', 'trclmp', 'highperformancegate'
 ];
 
-// 1. SMART CLICK-THROUGH (Click block nahi hoga)
-document.addEventListener('mousedown', (e) => {
+// 1. DYNAMIC Z-INDEX NEUTRALIZER
+// Ye kisi bhi cheez ko player ke upar 'fixed' ya 'absolute' baithne nahi dega
+const purgeAdLayers = () => {
     const player = document.getElementById('main-player');
-    const target = e.target;
+    const app = document.getElementById('app');
+    
+    document.querySelectorAll('div, iframe, ins, section, a').forEach(el => {
+        // Player, App aur Episode Grid ko mat chhedo
+        if (el === player || (app && app.contains(el)) || el.id === 'main-player') return;
 
-    // Agar click player par nahi hai, aur target element poori screen cover kar raha hai (Ads ki nishani)
-    if (player && target !== player && !player.contains(target)) {
-        const style = window.getComputedStyle(target);
-        if (style.position === 'absolute' || style.position === 'fixed') {
-            if (parseInt(style.zIndex) > 10) {
-                console.log("🛡️ Stealth: Ad layer detected. Bypassing...");
-                
-                // Magic Line: Click ko layer ke "aar-paar" bhejta hai
-                target.style.pointerEvents = 'none'; 
-                
-                // Layer ko 100ms baad uda do taki user ko pata bhi na chale
-                setTimeout(() => { if(target.parentNode) target.remove(); }, 100);
-            }
+        const style = window.getComputedStyle(el);
+        const isFixed = style.position === 'fixed' || style.position === 'absolute';
+        
+        // Agar koi element bahut high z-index par hai ya screen cover kar raha hai
+        if (isFixed && (parseInt(style.zIndex) > 5 || el.offsetWidth >= window.innerWidth * 0.9)) {
+            console.log("🛡️ Shield: Purged invisible ad overlay");
+            el.remove();
         }
-    }
-}, true);
+    });
+};
 
-// 2. NETWORK & POP-UP KILLER
-window.open = function() { return null; };
+// 2. AGGRESSIVE POPUP KILLER (Overwrites window.open)
+window.open = function() { 
+    console.log("🚫 Aura Shield: Blocked an attempted Popup/Redirect");
+    return null; 
+};
 
-const auraClean = () => {
-    // 1. Blacklisted domains ko udao
-    document.querySelectorAll('iframe, script, a').forEach(el => {
+// 3. MUTATION OBSERVER (Real-time safai)
+const observer = new MutationObserver(() => {
+    purgeAdLayers();
+    document.querySelectorAll('script, iframe').forEach(el => {
         if (el.id === 'main-player') return;
-        const src = el.src || el.href || '';
+        const src = el.src || '';
         if (BLACKLISTED_DOMAINS.some(d => src.toLowerCase().includes(d))) {
             el.remove();
         }
     });
+});
+observer.observe(document.body, { childList: true, subtree: true });
 
-    // 2. Player ki priority top par rakho
-    const player = document.getElementById('main-player');
-    if (player) {
-        player.style.zIndex = "9999";
-        player.style.position = "relative";
-    }
-};
-
-// Har 400ms mein safai
-setInterval(auraClean, 400);
+// Har 500ms par ek backup scan
+setInterval(purgeAdLayers, 500);
 
 // ==========================================
 // 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; // Stranger Things example
+const TMDB_ID = '66732'; // Stranger Things
 
 let currentS = 1;
 let currentE = 1;
@@ -75,7 +73,7 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 3D Hover & RGB Effects Intact (Ek Number!)
+            // 3D Hover & RGB Effects
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -105,9 +103,12 @@ function updatePlayer() {
     const urls = {
         vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`,
         vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`
+        moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
+        videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
-    if (player) player.src = urls[currentServer];
+    if (player) {
+        player.src = urls[currentServer];
+    }
 }
 
 function switchServer(s) { 
@@ -119,6 +120,6 @@ function switchServer(s) {
     updatePlayer(); 
 }
 
-// Initial Start
+// Start the Engine
 loadEpisodes(1);
 updatePlayer();
