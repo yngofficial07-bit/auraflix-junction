@@ -1,51 +1,54 @@
 // ==============================================================================
-// 💀 KERNEL BYPASS: UNCHAINED MODE (NO SANDBOX)
+// 🛡️ THE PHANTASM BYPASS: THE ULTIMATE AD-TRAP BREAKER
 // ==============================================================================
 
 (function() {
-    console.log("⚡ INDIPLEX: Unchained Mode Active. Sandbox removed.");
+    console.log("⚡ INDIPLEX: Phantasm Mode Engaged. Breaking Ad-Trap...");
 
-    // 1. THE PHANTOM WINDOW (Top-Level Popup Block)
-    const originalOpen = window.open;
-    window.open = new Proxy(originalOpen, {
-        apply: function(target, thisArg, argumentsList) {
-            console.log("🛡️ Neutralized Top-Level Popup ->", argumentsList[0]);
-            return {
-                closed: false,
-                focus: function() {},
-                blur: function() {},
-                close: function() { this.closed = true; },
-                postMessage: function() {}
-            };
+    // 1. THE GHOST WINDOW (Billion IQ Fake-Out)
+    // Hum window.open ko ek aise 'Proxy' se replace karenge jo 
+    // Player ko hamesha "Success" ka signal bhejega.
+    const windowHandler = {
+        get: function(target, prop) {
+            if (prop === 'closed') return false; // Player ko lagega window abhi bhi khuli hai
+            return function() { return true; }; // Saare functions (focus/blur) ko success dikhao
         }
-    });
+    };
 
-    // 2. DOM SURVEILLANCE (Nuking overlapping ad layers on our page)
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const tag = node.tagName.toLowerCase();
-                    const zIndex = window.getComputedStyle(node).zIndex;
-                    
-                    if ((tag === 'div' || tag === 'iframe') && zIndex > 1000 && node.id !== 'main-player') {
-                        node.style.setProperty('display', 'none', 'important');
-                        node.style.setProperty('pointer-events', 'none', 'important');
-                        node.remove();
-                    }
+    const fakeWindow = new Proxy({}, windowHandler);
+
+    window.open = function() {
+        console.log("🛡️ Phantasm: Intercepted ad-click. Sending fake 'Success' signal to player.");
+        return fakeWindow; // Player ko lagega popup khul gaya, wo video chalayega
+    };
+
+    // 2. THE CLICK-THROUGH TUNNEL
+    // Ye code ensure karega ki player ke upar koi bhi invisible ad-layer na rahe
+    const clearPath = () => {
+        const player = document.getElementById('main-player');
+        if (!player) return;
+
+        // Player ko sabse upar laao
+        player.style.setProperty('z-index', '2147483647', 'important');
+        player.style.setProperty('pointer-events', 'auto', 'important');
+
+        // Baaki sab fixed kachra uda do jo click rok raha hai
+        document.querySelectorAll('div, iframe, section').forEach(el => {
+            if (el.id !== 'app' && el.id !== 'main-player' && !el.closest('#episode-grid')) {
+                const s = window.getComputedStyle(el);
+                if ((s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 100) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('pointer-events', 'none', 'important');
                 }
-            });
+            }
         });
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    };
 
-    // 3. FAKE ANTI-ADBLOCK SIGNALS
-    window.adblocker = false;
-    window.isAdBlockActive = false;
+    setInterval(clearPath, 300);
 })();
 
 // ==============================================================================
-// 🎬 INDIPLEX CORE: 100% VISUALS & FEATURES (ZERO SKIPS)
+// 🎬 INDIPLEX CORE: ZERO SKIPS (ALL FEATURES & ANIMATIONS)
 // ==============================================================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -64,7 +67,7 @@ async function loadEpisodes(seasonNum) {
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
             
-            // 💎 ALL ANIMATIONS PRESERVED (Tilt & RGB)
+            // 💎 THE "EK NUMBER" STUFF: 3D Hover & RGB Glow intact
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -82,7 +85,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 TMDB Core Error"); }
+    } catch (e) { console.error("🚨 TMDB Loading Failed"); }
 }
 
 function updatePlayer() {
@@ -95,13 +98,13 @@ function updatePlayer() {
     };
     
     if (player) {
-        // ❌ NO SANDBOX: Let the player load natively so it doesn't throw errors
+        // NO SANDBOX (Player khushi-khushi load hoga)
         player.removeAttribute('sandbox'); 
         player.src = urls[currentServer];
         
-        // Auto-Focus for Keyboard Control
+        // Auto-Focus for Immediate Keyboard Control
         player.onload = () => {
-            setTimeout(() => { player.focus(); }, 800);
+            setTimeout(() => { player.focus(); }, 1000);
         };
     }
 }
@@ -118,11 +121,3 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
     updatePlayer();
 });
-
-// ⚡ FORCE FOCUS LOOP (The Keyboard Bypass)
-setInterval(() => {
-    const player = document.getElementById('main-player');
-    if(player && document.activeElement !== player) {
-        player.focus();
-    }
-}, 2000);
