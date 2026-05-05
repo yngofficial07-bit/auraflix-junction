@@ -1,22 +1,27 @@
 let clickCount = 0;
 
-// Shield element ko pakdo
-const shield = document.getElementById('ad-shield');
-
-if (shield) {
-    shield.onclick = function() {
-        clickCount++;
-        console.log(`Ad-Shield: Click ${clickCount} captured!`);
-
-        // Pehle 2 click par sirf ad trigger hone denge (jo Brave/Extension block kar dega)
-        // Ya user manually pop-up band karega. 
-        // 3rd click par hum rasta saaf kar denge.
-        if (clickCount >= 2) {
-            shield.classList.add('hidden'); // Shield gayab!
-            console.log("Shield Disabled. Now you can play.");
+// 1. Brave-style Ad Nuker
+const adNuker = new MutationObserver(() => {
+    // Ye un common ad domains ko block karega jo pop-ups kholte hain
+    const forbiddenPatterns = ['doubleclick', 'adsystem', 'popcash', 'onclickads', 'propush'];
+    
+    document.querySelectorAll('iframe, script').forEach(el => {
+        const src = el.src || '';
+        if (forbiddenPatterns.some(pattern => src.includes(pattern))) {
+            el.remove();
+            console.log("AuraFlix Shield: Ad Blocked!");
         }
-    };
-}
+    });
+});
+
+adNuker.observe(document.body, { childList: true, subtree: true });
+
+// 2. Window Open Block (Brave ka main feature)
+// Isse naye tabs/windows khulna band ho jayenge
+window.open = function() { 
+    console.log("AuraFlix Shield: Pop-up blocked!");
+    return null; 
+};
 
 
 
