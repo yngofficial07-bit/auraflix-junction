@@ -40,11 +40,12 @@ window.open = (function(origOpen) {
     };
 })(window.open);
 
-// 4. SANDBOXING (Redirect Security)
+// 4. SANDBOXING (REMOVED FOR PLAYBACK)
 const playerIframe = document.getElementById('main-player');
 if (playerIframe) {
-   // allow-popups zaroori hai player chalne ke liye, par Sniper unhe band kar dega
-   playerIframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-presentation allow-popups');
+   // Humne sandbox hata diya hai taaki "Disable Sandbox" wala error na aaye
+   playerIframe.removeAttribute('sandbox'); 
+   console.log("AuraFlix Shield: Sandbox removed for smooth playback.");
 }
 
 // --- TMDB CONFIG & STREAMING LOGIC ---
