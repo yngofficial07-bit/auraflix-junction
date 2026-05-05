@@ -1,5 +1,5 @@
 // ==========================================
-// 🛡️ AURA-BRAVE ULTIMATE SHIELD ENGINE
+// 🛡️ AURA-BRAVE GLASS SHIELD ENGINE
 // ==========================================
 
 const BLACKLISTED_DOMAINS = [
@@ -8,59 +8,73 @@ const BLACKLISTED_DOMAINS = [
     'pop', 'xtra', 'click', 'double', 'adsystem', 'syndication', 'doubleclick'
 ];
 
-// 1. THE ULTIMATE PRIORITY SHIELD (Player ko King banata hai)
-const prioritizePlayer = () => {
-    const player = document.getElementById('main-player');
-    if (player) {
-        player.style.zIndex = "999999"; 
-        player.style.position = "relative";
-        player.style.pointerEvents = "auto"; 
+// 1. DYNAMIC CSS INJECTOR (Shield & Animations ke liye)
+const style = document.createElement('style');
+style.textContent = `
+    .glass-shield {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 2000000;
+        background: transparent;
+        cursor: pointer;
     }
+    #main-player {
+        z-index: 10;
+        position: relative;
+    }
+`;
+document.head.appendChild(style);
 
-    // Baaki high z-index layers ko niche dhakelo
-    document.querySelectorAll('div, ins, iframe').forEach(el => {
-        if (el.id !== 'main-player' && !el.contains(player)) {
-            const style = window.getComputedStyle(el);
-            if (parseInt(style.zIndex) > 1000) {
-                el.style.zIndex = "1";
-                el.style.display = "none"; 
-            }
-        }
-    });
-};
-
-// 2. NUCLEAR CLICK PROTECTOR (Ghost Layers ko turant uda deta hai)
-document.addEventListener('click', (e) => {
-    const player = document.getElementById('main-player');
-    if (player && !player.contains(e.target) && e.target.tagName !== 'BUTTON') {
-        const style = window.getComputedStyle(e.target);
-        if (style.position === 'absolute' || style.position === 'fixed') {
-            console.log("🛡️ Shield: Invisible Ad Layer Neutralized!");
+// 2. THE GLASS SHIELD LOGIC
+// Ye player par hone wale pehle 'khatarnak' click ko block karega
+const applyGlassShield = () => {
+    const playerContainer = document.querySelector('.video-container') || document.body;
+    const existingShield = document.querySelector('.glass-shield');
+    
+    if (!existingShield) {
+        const shield = document.createElement('div');
+        shield.className = 'glass-shield';
+        
+        shield.addEventListener('click', (e) => {
+            console.log("🛡️ Shield: First click intercepted & neutralized!");
             e.preventDefault();
             e.stopPropagation();
-            e.target.remove(); 
-        }
+            shield.remove(); // Pehla click "kha" kar shield hat jayegi
+        }, true);
+
+        playerContainer.style.position = 'relative';
+        playerContainer.appendChild(shield);
     }
-}, true);
-
-// 3. BRAVE-STYLE POP-UP & NETWORK BLOCKER
-window.open = function() { return null; };
-
-const killAds = () => {
-    document.querySelectorAll('iframe, script, a').forEach(el => {
-        if (el.id === 'main-player') return;
-        const src = el.src || el.href || '';
-        if (BLACKLISTED_DOMAINS.some(d => src.toLowerCase().includes(d))) {
-            el.remove();
-        }
-    });
 };
 
-// Har 300ms mein scan check
-setInterval(() => {
-    prioritizePlayer();
-    killAds();
-}, 300);
+// 3. MUTATION OBSERVER (Ads aate hi unhe "mote" marna)
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) { // Element node
+                const source = node.src || node.href || node.id || node.className || '';
+                const isAd = BLACKLISTED_DOMAINS.some(d => source.toLowerCase().includes(d));
+                
+                // Agar koi bada div player ke upar aa raha hai
+                const style = window.getComputedStyle(node);
+                const isOverlay = (style.position === 'absolute' || style.position === 'fixed') && parseInt(style.zIndex) > 100;
+
+                if (isAd || (isOverlay && node.id !== 'app' && node.id !== 'main-player')) {
+                    node.remove();
+                    console.log("🛡️ Shield: Auto-removed ad element");
+                }
+            }
+        });
+    });
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+
+// 4. BRAVE-STYLE POP-UP KILLER
+window.open = function() { return null; };
+
+// Har 500ms mein shield check karo
+setInterval(applyGlassShield, 500);
 
 // ==========================================
 // 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
@@ -83,7 +97,7 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 3D Hover & RGB Animations Intact
+            // Keep 3D/RGB Animations intact
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -100,11 +114,12 @@ async function loadEpisodes(seasonNum) {
                 currentE = epi.episode_number;
                 updatePlayer();
                 loadEpisodes(currentS); 
+                applyGlassShield(); // Har naye episode par shield wapas lagao
             };
             grid.appendChild(card);
         });
     } catch (err) {
-        console.error("TMDB Load Error:", err);
+        console.error("Error loading episodes:", err);
     }
 }
 
@@ -125,8 +140,9 @@ function switchServer(s) {
         if(btn.innerText.toLowerCase().includes(s)) btn.classList.add('active');
     });
     updatePlayer(); 
+    applyGlassShield(); // Server change par bhi shield lagao
 }
 
-// Start the Engine
+// Start the engine
 loadEpisodes(1);
 updatePlayer();
