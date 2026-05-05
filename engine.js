@@ -1,52 +1,65 @@
 // ==========================================
-// 🛡️ THE QUANTUM BRIDGE: INVISIBLE LAYER NUKER
+// 🛡️ THE IMMUNE SYSTEM: UNIVERSAL AD-PURGE
 // ==========================================
 
 (function() {
-    console.log("⚡ INDIPLEX: Quantum Bridge Activated. Nuking invisible layers...");
+    console.log("⚡ INDIPLEX: Immune System Active. Nuke-all protocol engaged.");
 
-    // 1. THE PHANTOM WINDOW (Popup Fake-Out)
-    // Player ko lagega popup khul gaya, wo 'Play' unlock kar dega
-    window.open = function() {
-        console.log("🛡️ Bridge: Intercepted popup. Sending 'Success' to player.");
-        return { closed: false, focus: () => {}, close: () => { this.closed = true; } };
+    // 1. NETWORK FILTER (Blocking the source)
+    const adKeywords = ['proads', 'onclick', 'rhtads', 'mndsrv', 'popads', 'bit.ly', 'doubleclick'];
+    
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        if (adKeywords.some(keyword => arguments[0].includes(keyword))) {
+            return Promise.reject(new Error("🛡️ Immune System: Ad Source Blocked"));
+        }
+        return originalFetch.apply(this, arguments);
     };
 
-    // 2. THE LAYER NUKER (Billion IQ Move)
-    // Ye function player ke upar ki har us cheez ko udayega jo click rok rahi hai
-    const nukeInvisibleLayers = () => {
+    // 2. THE SCRIPT PURGER (Deep Scan)
+    const purgeScripts = () => {
+        document.querySelectorAll('script').forEach(s => {
+            // Agar script ka source suspicious hai, toh use udao
+            if (s.src && adKeywords.some(kw => s.src.includes(kw))) {
+                s.remove();
+            }
+        });
+    };
+
+    // 3. AGGRESSIVE LAYER NUKER (Refined)
+    const layerNuker = () => {
         const player = document.getElementById('main-player');
         if (!player) return;
 
-        // Player ko physical priority do
+        // Player ko priority 1 par rakho
         player.style.setProperty('z-index', '2147483647', 'important');
         player.style.setProperty('pointer-events', 'auto', 'important');
-        player.style.setProperty('position', 'relative', 'important');
 
-        // Sabhi divs ko scan karo jo player ke upar 'Fixed' ya 'Absolute' hain
-        const allDivs = document.querySelectorAll('div, iframe, section, ins');
-        allDivs.forEach(el => {
-            if (el.id !== 'app' && el.id !== 'main-player' && !el.closest('#episode-grid')) {
-                const style = window.getComputedStyle(el);
-                const isOverlay = style.position === 'fixed' || style.position === 'absolute';
-                const isHidden = style.opacity === '0' || style.backgroundColor === 'transparent' || style.visibility === 'hidden';
-                
-                // Agar wo element player ke upar hai aur invisible hai, toh wo pakka AD hai
-                if (isOverlay && (parseInt(style.zIndex) > 100 || isHidden)) {
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('pointer-events', 'none', 'important');
-                    el.remove(); // Physically delete the ad-layer
+        const elements = document.querySelectorAll('body > div, body > iframe');
+        elements.forEach(el => {
+            if (el.id !== 'app' && el.id !== 'main-player') {
+                const z = window.getComputedStyle(el).zIndex;
+                // Agar kuch bhi player ke upar aane ki koshish kare, udao
+                if (parseInt(z) > 100 || el.style.position === 'fixed') {
+                    el.style.display = 'none';
+                    el.remove();
                 }
             }
         });
     };
 
-    // Har 200ms mein deewar saaf karo
-    setInterval(nukeInvisibleLayers, 200);
+    // Har 100ms mein scan (Quantum Speed)
+    setInterval(() => {
+        layerNuker();
+        purgeScripts();
+    }, 100);
+
+    // 4. POPUP VIRTUALIZATION
+    window.open = () => ({ closed: false, focus: () => {}, close: () => {} });
 })();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
+// 🎬 INDIPLEX CORE: ABYSSAL VOID (NO SKIPS)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -64,7 +77,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 EK NUMBER VISUALS: 3D Tilt & RGB Glow preserved
+            // 💎 PRESERVING: 3D Hover & RGB Glow
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -95,13 +108,9 @@ function updatePlayer() {
     };
     
     if (player) {
-        player.removeAttribute('sandbox'); // Sandbox hataya taaki native speed mile
         player.src = urls[currentServer];
-        
-        // Signal Injection: Player ko keyboard command b bhejne ke liye focus rakho
-        player.onload = () => {
-            setTimeout(() => { player.focus(); }, 1000);
-        };
+        // Focus player for direct signals
+        player.onload = () => { player.focus(); };
     }
 }
 
