@@ -12,6 +12,16 @@
             <iframe id="main-player" src="" frameborder="0" allowfullscreen></iframe>
         </div>
 
+        <div class="server-container">
+    <span class="server-label">Servers:</span>
+    <div id="server-list" class="server-list">
+        <button class="server-btn active" onclick="switchServer('vidsrc')">VidSrc</button>
+        <button class="server-btn" onclick="switchServer('vidlink')">VidLink</button>
+        <button class="server-btn" onclick="switchServer('moviesapi')">MoviesAPI</button>
+        <button class="server-btn" onclick="switchServer('videasy')">VidEasy</button>
+    </div>
+</div>
+
         <!-- Netflix Style Episode Section -->
         <div class="episodes-wrapper">
             <div class="episodes-header">
