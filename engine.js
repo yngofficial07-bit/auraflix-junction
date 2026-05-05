@@ -1,47 +1,46 @@
 // ==========================================
-// 🛡️ AURA-BRAVE STEALTH ENGINE (SAFE VERSION)
+// 🌌 INDIPLEX: THE PHANTOM PROTOCOL (V4)
 // ==========================================
 
-const AD_PATTERNS = [
-    /oundhertobeconsist/i, /frs2c/i, /v2006/i, /wiestunvote/i, 
-    /painamour/i, /twasmerelyhers/i, /milvussorel/i, /havingwacks/i,
-    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i
-];
-
-window.open = function() { return null; };
-
-const neutralizeAds = () => {
-    // 1. Sirf un cheezon ko dhoondo jo hamare structure ka hissa nahi hain
-    document.querySelectorAll('iframe, div, ins, a').forEach(el => {
-        // Safe Zones: Inhe kabhi mat hatana
-        if (el.id === 'main-player' || 
-            el.closest('#episode-grid') || 
-            el.closest('.server-options') || 
-            el.id === 'app') return;
-
-        const content = (el.src || el.href || '').toLowerCase();
-        
-        // 2. Sirf Blacklisted Domains ko udao
-        if (AD_PATTERNS.some(pattern => pattern.test(content))) {
-            el.remove();
+// 1. GHOST MODE: Har layer ko transparency dena
+const applyGhostMode = () => {
+    // Sabhi DIVs ko check karo
+    document.querySelectorAll('div, section, ins, span').forEach(el => {
+        // Hamare main elements ko chhod kar...
+        if (el.id === 'app' || el.id === 'main-player' || el.closest('#episode-grid') || el.closest('.server-options')) {
+            el.style.pointerEvents = 'auto'; // Inpar click hona chahiye
             return;
         }
 
-        // 3. Invisible Overlays (Agar player ke upar koi 'fixed' div hai)
-        const style = window.getComputedStyle(el);
-        if (style.position === 'fixed' && parseInt(style.zIndex) > 100) {
-            // Agar ye div poori screen cover kar raha hai toh hi udao
-            if (el.offsetWidth > window.innerWidth * 0.8) {
-                el.remove();
-            }
+        // Agar koi element fixed hai aur player ke upar hai, toh use "Hawa" bana do
+        const s = window.getComputedStyle(el);
+        if (s.position === 'fixed' || s.position === 'absolute') {
+            el.style.pointerEvents = 'none'; // Click iske aar-paar nikal jayega
+            el.style.background = 'transparent';
+            el.style.zIndex = '-1'; // Isse peeche bhej do
         }
     });
 };
 
-setInterval(neutralizeAds, 1000); // 1 second gap for stability
+// 2. THE CLICK-THROUGH TUNNEL
+// Ye script har 500ms mein ensure karegi ki player hamesha accessible rahe
+setInterval(applyGhostMode, 500);
+
+// 3. AGGRESSIVE DOMAIN SINKHOLE
+const SINKHOLE = ['oundhertobeconsist', 'frs2c', 'v2006', 'wiestunvote', 'casino', '1xbet'];
+const destroyViruses = () => {
+    document.querySelectorAll('iframe, script').forEach(el => {
+        if (el.id === 'main-player') return;
+        const src = el.src.toLowerCase();
+        if (SINKHOLE.some(d => src.includes(d))) {
+            el.remove();
+        }
+    });
+};
+setInterval(destroyViruses, 1000);
 
 // ==========================================
-// 🎬 INDIPLEX CORE (TMDB, Servers, 3D/RGB)
+// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -54,37 +53,28 @@ let currentServer = 'vidsrc';
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
-        const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
-        const data = await response.json();
+        const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
+        const data = await res.json();
         const grid = document.getElementById('episode-grid');
-        if (!grid) return;
-        
         grid.innerHTML = ''; 
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            card.className = 'episode-card tilt-effect rgb-glow'; 
-            const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
+            card.className = 'episode-card tilt-effect rgb-glow'; // 3D & RGB Intact
+            const badge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
             card.innerHTML = `
-                ${playingBadge}
+                ${badge}
                 <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
                 <div class="epi-info">
                     <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
                     <div class="epi-meta">${epi.runtime || '--'} min</div>
                 </div>
             `;
-            
-            card.onclick = () => {
-                currentE = epi.episode_number;
-                updatePlayer();
-                loadEpisodes(currentS); 
-            };
+            card.onclick = () => { currentE = epi.episode_number; updatePlayer(); loadEpisodes(currentS); };
             grid.appendChild(card);
         });
-    } catch (err) {
-        console.error("TMDB Load Error");
-    }
+    } catch (e) { console.error("TMDB Error"); }
 }
 
 function updatePlayer() {
@@ -106,8 +96,9 @@ function switchServer(s) {
     updatePlayer(); 
 }
 
-// Kickstart
+// Initial Launch
 document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
     updatePlayer();
+    console.log("⚡ PHANTOM PROTOCOL ACTIVE: Click-through enabled.");
 });
