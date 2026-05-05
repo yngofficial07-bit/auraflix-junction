@@ -1,61 +1,78 @@
-// ==========================================
-// 🛡️ THE ANTI-MATTER SHIELD (NO-LIMIT BLOCKER)
-// ==========================================
+// ==============================================================================
+// 💀 THE GOD-MODE KERNEL: ROOT-LEVEL ENGINE HIJACK
+// ==============================================================================
 
 (function() {
-    // 1. BLACKLIST: Saare gande domains ko block karo
-    const adDomains = [
-        'proads.tld', 'onclickalgo.com', 'vidsrc.me/ads', 
-        'rhtads.com', 'mndsrv.com', 'popads.net', 'bit.ly',
-        'doubleclick.net', 'google-analytics.com'
-    ];
+    console.log("⚡ KERNEL PANIC: Indiplex God-Mode Activated.");
 
-    // 2. NETWORK LEVEL BLOCKING (Brave Tech)
-    const originalFetch = window.fetch;
-    window.fetch = function() {
-        if (adDomains.some(domain => arguments[0].includes(domain))) {
-            return Promise.reject(new Error("🛡️ INDIPLEX: Blocked Ad Request"));
+    // 1. THE PHANTOM WINDOW (Ultimate Fake-Out)
+    // Inka script check karta hai ki popup khula ya nahi. Hum use ek fake "Ghost" window denge.
+    const originalOpen = window.open;
+    window.open = new Proxy(originalOpen, {
+        apply: function(target, thisArg, argumentsList) {
+            console.log("🛡️ GOD-MODE: Ad Popup intercepted and neutralized ->", argumentsList[0]);
+            // Fake window object returning success metrics so the player unlocks
+            return {
+                closed: false,
+                focus: function() { console.log("Fake focus"); },
+                blur: function() {},
+                close: function() { this.closed = true; },
+                postMessage: function() {},
+                document: { readyState: 'complete', write: function() {}, close: function() {} }
+            };
         }
-        return originalFetch.apply(this, arguments);
+    });
+
+    // 2. PROTOTYPE HIJACKING (Event Sanitization)
+    // Ye browser ke 'addEventListener' ko hijack karke ads wale clicks ko filter karega
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+        if (type === 'click' || type === 'mouseup' || type === 'mousedown') {
+            const safeListener = function(e) {
+                // Agar event iframe ke bahar se aa raha hai aur suspicious hai, toh maar do
+                if (e.target && !e.target.closest('#main-player') && e.isTrusted) {
+                    const classId = (e.target.className || '') + (e.target.id || '');
+                    if (/(ad|pop|overlay|click|sponsor)/i.test(classId)) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                return listener.apply(this, arguments);
+            };
+            return originalAddEventListener.call(this, type, safeListener, options);
+        }
+        return originalAddEventListener.call(this, type, listener, options);
     };
 
-    // 3. DOM SURVEILLANCE: Agar koi naya ad banne ki koshish kare, turant delete
+    // 3. THE ANTIMATTER OBSERVER
+    // DOM mein ghusne wale har naye kachre ko microsecond mein delete karna
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) { // Element node
-                    const isAd = node.tagName === 'IFRAME' && !node.id.includes('main-player') ||
-                                 /pop|ads|banner|promo/i.test(node.className + node.id) ||
-                                 node.style.zIndex > 1000;
-                    
-                    if (isAd) {
-                        node.style.display = 'none';
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tag = node.tagName.toLowerCase();
+                    const zIndex = window.getComputedStyle(node).zIndex;
+                    // Nuke anything trying to overlap the player
+                    if ((tag === 'div' || tag === 'iframe') && zIndex > 1000 && node.id !== 'main-player') {
+                        node.style.setProperty('display', 'none', 'important');
                         node.remove();
                     }
                 }
             });
         });
     });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // 4. POPUP EXTINCTION
-    window.open = () => ({ closed: true, focus: () => {}, close: () => {} });
-    
-    // 5. CLICK HIJACK RECOVERY
-    setInterval(() => {
-        const player = document.getElementById('main-player');
-        if (player) {
-            player.style.pointerEvents = 'auto';
-            player.style.zIndex = '2147483647'; // Highest possible z-index
-        }
-    }, 500);
+    // 4. ANTI-ADBLOCK NEUTRALIZER
+    window.adblocker = false;
+    window.isAdBlockActive = false;
+    Object.defineProperty(window, 'adblocker', { get: () => false, set: () => {} });
 })();
 
-// ==========================================
-// 🎬 INDIPLEX CORE: 100% PRESERVED
-// ==========================================
-// Ryzen/RTX Build Power | Android Dev Java Spirit
+// ==============================================================================
+// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (ZERO SKIPS, 100% VISUALS)
+// ==============================================================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
@@ -72,7 +89,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 NO SKIPS: 3D Hover & RGB Glow Intact
+            // 💎 THE "EK NUMBER" EFFECTS: 3D Tilt & RGB Glow strictly preserved
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -82,6 +99,7 @@ async function loadEpisodes(seasonNum) {
                     <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
                 </div>`;
             
+            // Core Navigation Logic
             card.onclick = (e) => {
                 e.preventDefault();
                 currentE = epi.episode_number;
@@ -90,7 +108,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("TMDB Error"); }
+    } catch (e) { console.error("🚨 TMDB Core Error"); }
 }
 
 function updatePlayer() {
@@ -104,8 +122,16 @@ function updatePlayer() {
     
     if (player) {
         player.src = urls[currentServer];
-        // Autocomplete focus for Keyboard signals (Space/Arrows)
-        player.focus();
+        
+        // 🛡️ THE CHROMIUM ENGINE LOCK
+        // Ye browser engine ko force karta hai ki iframe koi naya tab khol hi na sake (allow-popups MISSING hai)
+        // Lekin baaki sab allow karta hai taaki video play ho.
+        player.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+        
+        // Auto-Focus for Immediate Keyboard Control (Space to Play/Pause)
+        player.onload = () => {
+            setTimeout(() => { player.focus(); }, 500);
+        };
     }
 }
 
@@ -120,5 +146,14 @@ function switchServer(s) {
 document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
     updatePlayer();
-    console.log("⚡ INDIPLEX: Anti-Matter Shield Active.");
 });
+
+// ⚡ THE MASTER KEY: FORCE FOCUS LOOP
+// Agar click block ho jaye, toh Spacebar/Arrows se control humesha active rahega
+setInterval(() => {
+    const player = document.getElementById('main-player');
+    if(player && document.activeElement !== player) {
+        // Keeps the player ready for keyboard commands
+        player.focus();
+    }
+}, 2000);
