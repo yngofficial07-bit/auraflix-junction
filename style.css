@@ -1,1 +1,83 @@
+body {
+    background-color: #050505;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
 
+.watch-container { padding: 20px; }
+
+#main-player {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+/* Season Selector */
+.season-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.chip {
+    padding: 8px 20px;
+    background: #222;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.chip.active {
+    background: #e50914; /* Netflix Red */
+    font-weight: bold;
+}
+
+/* Episode Grid */
+.episode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.episode-card {
+    background: #181818;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.episode-card:hover { transform: scale(1.05); }
+
+.epi-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.epi-info { padding: 12px; }
+
+.epi-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.epi-meta {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.playing-tag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #0071eb;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+}
