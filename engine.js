@@ -1,10 +1,21 @@
 let clickCount = 0;
+const shield = document.getElementById('ad-shield');
 
-// 1. Brave-style Ad Nuker
+// 1. MANUAL SHIELD LOGIC (Invisible Wall)
+if (shield) {
+    shield.onclick = function() {
+        clickCount++;
+        console.log(`AuraFlix Shield: Click ${clickCount} captured!`);
+        if (clickCount >= 2) {
+            shield.classList.add('hidden'); // 2 clicks ke baad rasta saaf
+            console.log("Shield Disabled. Enjoy the show!");
+        }
+    };
+}
+
+// 2. AD NUKER (Background Script Cleaning)
 const adNuker = new MutationObserver(() => {
-    // Ye un common ad domains ko block karega jo pop-ups kholte hain
-    const forbiddenPatterns = ['doubleclick', 'adsystem', 'popcash', 'onclickads', 'propush'];
-    
+    const forbiddenPatterns = ['doubleclick', 'adsystem', 'popcash', 'onclickads', 'propush', 'script.js'];
     document.querySelectorAll('iframe, script').forEach(el => {
         const src = el.src || '';
         if (forbiddenPatterns.some(pattern => src.includes(pattern))) {
@@ -13,46 +24,38 @@ const adNuker = new MutationObserver(() => {
         }
     });
 });
-
 adNuker.observe(document.body, { childList: true, subtree: true });
 
-// 1. Smart Sniper: Pop-up khulega par turant "Kill" ho jayega
+// 3. SMART SNIPER (Pop-up Terminator)
 window.open = (function(origOpen) {
     return function(url, name, features) {
-        console.log("AuraFlix Shield: Pop-up detected & neutralizing...");
-        
-        // Asli window kholo
         const newWin = origOpen.apply(window, arguments);
-        
-        // Agar window khul gayi, toh use 100ms mein band kar do
         if (newWin) {
             setTimeout(() => {
-                newWin.close();
-                console.log("AuraFlix Shield: Pop-up Terminated.");
-                window.focus(); // Focus wapas apni site pr
+                newWin.close(); // Khulte hi khatam
+                window.focus(); // Wapas focus apni site par
             }, 100); 
         }
         return newWin;
     };
 })(window.open);
 
-// 2. Sandboxing (Iframe safety)
-// Isse iframe ke andar se hone wale automatic redirects ruk jayenge
+// 4. SANDBOXING (Redirect Security)
 const playerIframe = document.getElementById('main-player');
 if (playerIframe) {
+   // allow-popups zaroori hai player chalne ke liye, par Sniper unhe band kar dega
    playerIframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-presentation allow-popups');
-    // 'allow-popups' hata diya taaki iframe khud se kuch na khol sake
 }
 
-
+// --- TMDB CONFIG & STREAMING LOGIC ---
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; // Stranger Things (Example)
 
 let currentS = 1;
 let currentE = 1;
-let currentServer = 'vidsrc'; // Default server
+let currentServer = 'vidsrc'; 
 
-// 1. Episodes Load karne ka function
+// Function: Load Episodes from TMDB
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
@@ -64,7 +67,7 @@ async function loadEpisodes(seasonNum) {
     data.episodes.forEach(epi => {
         const card = document.createElement('div');
         card.className = 'episode-card';
-        // Agar ye episode chal raha hai toh badge dikhao
+        // 'PLAYING' badge agar current episode hai
         const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
         
         card.innerHTML = `
@@ -79,20 +82,21 @@ async function loadEpisodes(seasonNum) {
         card.onclick = () => {
             currentE = epi.episode_number;
             updatePlayer();
-            loadEpisodes(currentS); // Refresh cards to show "PLAYING" badge
+            loadEpisodes(currentS); // Refresh UI to show new playing badge
         };
         grid.appendChild(card);
     });
 }
 
-// 2. Server Switch karne ka function
+// Function: Switch Servers
 function switchServer(serverType) {
     currentServer = serverType;
     
-    // UI Update: Button highlight
+    // UI Update: Active class switch
     document.querySelectorAll('.server-btn').forEach(btn => {
         btn.classList.remove('active');
-        if(btn.getAttribute('onclick').includes(serverType)) {
+        // Match button by its onclick function string
+        if(btn.outerHTML.includes(serverType)) {
             btn.classList.add('active');
         }
     });
@@ -100,7 +104,7 @@ function switchServer(serverType) {
     updatePlayer();
 }
 
-// 3. Player URL update karne ka main logic
+// Function: Update Player Iframe URL
 function updatePlayer() {
     const player = document.getElementById('main-player');
     let url = "";
@@ -118,6 +122,6 @@ function updatePlayer() {
     player.src = url;
 }
 
-// Initial Load
+// --- INITIAL KICKSTART ---
 loadEpisodes(1);
 updatePlayer();
