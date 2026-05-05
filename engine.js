@@ -1,61 +1,36 @@
 // ==============================================================================
-// 💀 THE GOD-MODE KERNEL: ROOT-LEVEL ENGINE HIJACK
+// 💀 KERNEL BYPASS: UNCHAINED MODE (NO SANDBOX)
 // ==============================================================================
 
 (function() {
-    console.log("⚡ KERNEL PANIC: Indiplex God-Mode Activated.");
+    console.log("⚡ INDIPLEX: Unchained Mode Active. Sandbox removed.");
 
-    // 1. THE PHANTOM WINDOW (Ultimate Fake-Out)
-    // Inka script check karta hai ki popup khula ya nahi. Hum use ek fake "Ghost" window denge.
+    // 1. THE PHANTOM WINDOW (Top-Level Popup Block)
     const originalOpen = window.open;
     window.open = new Proxy(originalOpen, {
         apply: function(target, thisArg, argumentsList) {
-            console.log("🛡️ GOD-MODE: Ad Popup intercepted and neutralized ->", argumentsList[0]);
-            // Fake window object returning success metrics so the player unlocks
+            console.log("🛡️ Neutralized Top-Level Popup ->", argumentsList[0]);
             return {
                 closed: false,
-                focus: function() { console.log("Fake focus"); },
+                focus: function() {},
                 blur: function() {},
                 close: function() { this.closed = true; },
-                postMessage: function() {},
-                document: { readyState: 'complete', write: function() {}, close: function() {} }
+                postMessage: function() {}
             };
         }
     });
 
-    // 2. PROTOTYPE HIJACKING (Event Sanitization)
-    // Ye browser ke 'addEventListener' ko hijack karke ads wale clicks ko filter karega
-    const originalAddEventListener = EventTarget.prototype.addEventListener;
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
-        if (type === 'click' || type === 'mouseup' || type === 'mousedown') {
-            const safeListener = function(e) {
-                // Agar event iframe ke bahar se aa raha hai aur suspicious hai, toh maar do
-                if (e.target && !e.target.closest('#main-player') && e.isTrusted) {
-                    const classId = (e.target.className || '') + (e.target.id || '');
-                    if (/(ad|pop|overlay|click|sponsor)/i.test(classId)) {
-                        e.stopImmediatePropagation();
-                        e.preventDefault();
-                        return;
-                    }
-                }
-                return listener.apply(this, arguments);
-            };
-            return originalAddEventListener.call(this, type, safeListener, options);
-        }
-        return originalAddEventListener.call(this, type, listener, options);
-    };
-
-    // 3. THE ANTIMATTER OBSERVER
-    // DOM mein ghusne wale har naye kachre ko microsecond mein delete karna
+    // 2. DOM SURVEILLANCE (Nuking overlapping ad layers on our page)
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
                 if (node.nodeType === Node.ELEMENT_NODE) {
                     const tag = node.tagName.toLowerCase();
                     const zIndex = window.getComputedStyle(node).zIndex;
-                    // Nuke anything trying to overlap the player
+                    
                     if ((tag === 'div' || tag === 'iframe') && zIndex > 1000 && node.id !== 'main-player') {
                         node.style.setProperty('display', 'none', 'important');
+                        node.style.setProperty('pointer-events', 'none', 'important');
                         node.remove();
                     }
                 }
@@ -64,14 +39,13 @@
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    // 4. ANTI-ADBLOCK NEUTRALIZER
+    // 3. FAKE ANTI-ADBLOCK SIGNALS
     window.adblocker = false;
     window.isAdBlockActive = false;
-    Object.defineProperty(window, 'adblocker', { get: () => false, set: () => {} });
 })();
 
 // ==============================================================================
-// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (ZERO SKIPS, 100% VISUALS)
+// 🎬 INDIPLEX CORE: 100% VISUALS & FEATURES (ZERO SKIPS)
 // ==============================================================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -89,7 +63,8 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 THE "EK NUMBER" EFFECTS: 3D Tilt & RGB Glow strictly preserved
+            
+            // 💎 ALL ANIMATIONS PRESERVED (Tilt & RGB)
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -99,7 +74,6 @@ async function loadEpisodes(seasonNum) {
                     <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
                 </div>`;
             
-            // Core Navigation Logic
             card.onclick = (e) => {
                 e.preventDefault();
                 currentE = epi.episode_number;
@@ -121,16 +95,13 @@ function updatePlayer() {
     };
     
     if (player) {
+        // ❌ NO SANDBOX: Let the player load natively so it doesn't throw errors
+        player.removeAttribute('sandbox'); 
         player.src = urls[currentServer];
         
-        // 🛡️ THE CHROMIUM ENGINE LOCK
-        // Ye browser engine ko force karta hai ki iframe koi naya tab khol hi na sake (allow-popups MISSING hai)
-        // Lekin baaki sab allow karta hai taaki video play ho.
-        player.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-        
-        // Auto-Focus for Immediate Keyboard Control (Space to Play/Pause)
+        // Auto-Focus for Keyboard Control
         player.onload = () => {
-            setTimeout(() => { player.focus(); }, 500);
+            setTimeout(() => { player.focus(); }, 800);
         };
     }
 }
@@ -148,12 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePlayer();
 });
 
-// ⚡ THE MASTER KEY: FORCE FOCUS LOOP
-// Agar click block ho jaye, toh Spacebar/Arrows se control humesha active rahega
+// ⚡ FORCE FOCUS LOOP (The Keyboard Bypass)
 setInterval(() => {
     const player = document.getElementById('main-player');
     if(player && document.activeElement !== player) {
-        // Keeps the player ready for keyboard commands
         player.focus();
     }
 }, 2000);
