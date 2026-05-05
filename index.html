@@ -1,1 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AuraFlix Junction - Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="watch-container">
+        <!-- Cineb Player Engine -->
+        <div class="player-section">
+            <iframe id="main-player" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
 
+        <!-- Netflix Style Episode Section -->
+        <div class="episodes-wrapper">
+            <div class="episodes-header">
+                <h2>Episodes</h2>
+                <span id="episode-count">0 episodes</span>
+            </div>
+
+            <div id="season-chips" class="season-selector">
+                <!-- Seasons dynamic aayenge -->
+            </div>
+
+            <div id="episode-grid" class="episode-grid">
+                <!-- Episode Cards yahan generate honge -->
+            </div>
+        </div>
+    </div>
+    <script src="engine.js"></script>
+</body>
+</html>
