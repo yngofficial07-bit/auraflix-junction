@@ -1,48 +1,36 @@
 // ==========================================
-// 🛡️ INDIPLEX: NEURAL LINK BYPASS (V6)
+// 🛡️ THE BLACK HOLE: ANTI-AD ARCHITECTURE
 // ==========================================
 
-// 1. CREATE ISOLATED CONTROL PANEL (Ads can't touch this)
-const createNeuralController = () => {
-    const panel = document.createElement('div');
-    panel.id = 'neural-panel';
-    panel.style = `
-        position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-        width: 60px; background: rgba(0,0,0,0.9); border: 2px solid #00f7ff;
-        border-radius: 30px; display: flex; flex-direction: column;
-        align-items: center; gap: 20px; padding: 20px 0; z-index: 9999999;
-        box-shadow: 0 0 20px #00f7ff;
-    `;
+(function() {
+    // 1. NETWORK LEVEL BLOCKING (Request Interception)
+    const AD_SHARK = [/oundhertobeconsist/i, /frs2c/i, /wiestunvote/i, /v2006/i, /proads/i, /onclick/i];
     
-    // Play/Pause Bypass (Direct Iframe Messaging)
-    panel.innerHTML = `
-        <div onclick="window.location.reload()" style="cursor:pointer; color:white; font-size:12px;">REFRESH</div>
-        <div id="btn-vidsrc" class="neural-btn active" onclick="switchServer('vidsrc')">S1</div>
-        <div id="btn-vidlink" class="neural-btn" onclick="switchServer('vidlink')">S2</div>
-        <div id="btn-videasy" class="neural-btn" onclick="switchServer('videasy')">S3</div>
-    `;
-    document.body.appendChild(panel);
-};
+    const originalFetch = window.fetch;
+    window.fetch = function(url, ...args) {
+        if (typeof url === 'string' && AD_SHARK.some(p => p.test(url))) {
+            return Promise.reject(new Error('Blocked by INDIPLEX Shield'));
+        }
+        return originalFetch(url, ...args);
+    };
 
-// 2. THE "CLEAN-SWEEP" SANDBOX
-const aggressiveSanitize = () => {
-    // Sirf hamare elements ko zinda rakho, baaki sabko "Pointer-Disabled" kar do
-    const safeIDs = ['neural-panel', 'main-player', 'app', 'episode-grid'];
-    
-    document.querySelectorAll('*').forEach(el => {
-        const isSafe = safeIDs.some(id => el.id === id || el.closest('#' + id));
-        
-        if (!isSafe) {
-            const style = window.getComputedStyle(el);
-            if (style.position === 'fixed' || style.zIndex > 100) {
-                el.style.pointerEvents = 'none'; // Click-through enabled
-                el.style.opacity = '0'; // Invisible but present (prevents crash)
+    // 2. PREVENT DYNAMIC SCRIPT INJECTION (The Root Cause)
+    const originalAppendChild = Element.prototype.appendChild;
+    Element.prototype.appendChild = function(el) {
+        if (el.tagName === 'SCRIPT' || el.tagName === 'IFRAME') {
+            const src = el.src || '';
+            if (AD_SHARK.some(p => p.test(src))) {
+                console.log("🚫 Intercepted Ad Injection:", src);
+                return el; // Return without adding to DOM
             }
         }
-    });
-};
+        return originalAppendChild.apply(this, arguments);
+    };
 
-setInterval(aggressiveSanitize, 500);
+    // 3. GLOBAL POPUP EXTINCTION
+    window.open = () => null;
+    window.alert = () => null; // Some ads use annoying alerts
+})();
 
 // ==========================================
 // 🎬 INDIPLEX CORE: EVERYTHING PRESERVED
@@ -54,28 +42,29 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
-    const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
-    const data = await res.json();
-    const grid = document.getElementById('episode-grid');
-    if(!grid) return;
-    
-    grid.innerHTML = ''; 
-    data.episodes.forEach(epi => {
-        const card = document.createElement('div');
-        card.className = 'episode-card tilt-effect rgb-glow'; // 3D/RGB Intact
-        card.innerHTML = `
-            ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
-            <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
-            <div class="epi-info"><div class="epi-title">E${epi.episode_number}</div></div>`;
+    try {
+        const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
+        const data = await res.json();
+        const grid = document.getElementById('episode-grid');
+        if(!grid) return;
         
-        card.onclick = (e) => {
-            e.stopPropagation();
-            currentE = epi.episode_number;
-            updatePlayer();
-            loadEpisodes(currentS);
-        };
-        grid.appendChild(card);
-    });
+        grid.innerHTML = ''; 
+        data.episodes.forEach(epi => {
+            const card = document.createElement('div');
+            // 'Ek Number' Effects Intact: 3D Hover & RGB
+            card.className = 'episode-card tilt-effect rgb-glow'; 
+            
+            card.innerHTML = `
+                ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
+                <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
+                <div class="epi-info">
+                    <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
+                </div>
+            `;
+            card.onclick = () => { currentE = epi.episode_number; updatePlayer(); loadEpisodes(currentS); };
+            grid.appendChild(card);
+        });
+    } catch (e) { console.error("TMDB Load Error"); }
 }
 
 function updatePlayer() {
@@ -90,13 +79,19 @@ function updatePlayer() {
 
 function switchServer(s) { 
     currentServer = s; 
-    document.querySelectorAll('.neural-btn').forEach(b => b.classList.toggle('active', b.id.includes(s)));
+    document.querySelectorAll('.server-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(s));
+    });
     updatePlayer(); 
 }
 
+// 4. CLEAN-UP OBSERVER (Removing leftovers)
+const cleanUp = () => {
+    document.querySelectorAll('iframe:not(#main-player), .ad-container, [class*="pop"]').forEach(el => el.remove());
+};
+setInterval(cleanUp, 1000);
+
 document.addEventListener('DOMContentLoaded', () => {
-    createNeuralController();
     loadEpisodes(1);
     updatePlayer();
-    console.log("⚡ Neural Link Active: High-Z Control Panel Deployed.");
 });
