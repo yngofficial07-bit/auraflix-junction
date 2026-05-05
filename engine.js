@@ -1,56 +1,50 @@
 // ==========================================
-// 🛡️ AURA-BRAVE STEALTH ENGINE (ANTI-POPUP)
+// 🛡️ INDIPLEX DOMAIN-TARGETED SHIELD
 // ==========================================
 
-const BLACKLISTED_DOMAINS = [
-    '1xbet', 'oundhertobeconsist', 'muralssouth', 'polosanitizertrusting', 
-    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash',
-    'v2006', 'painamour', 'twasmeerelyhers', 'wiestunvote', 'raklls', 'syndication',
-    'adservice', 'doubleclick', 'adnxs', 'trclmp', 'highperformancegate'
+// Saare links jo tune bheje unka nichod (Pattern Matching)
+const AD_PATTERNS = [
+    /oundhertobeconsist/i, /frs2c/i, /v2006/i, /wiestunvote/i, 
+    /painamour/i, /twasmerelyhers/i, /milvussorel/i, /havingwacks/i,
+    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i
 ];
 
-// 1. DYNAMIC Z-INDEX NEUTRALIZER
-// Ye kisi bhi cheez ko player ke upar 'fixed' ya 'absolute' baithne nahi dega
-const purgeAdLayers = () => {
-    const player = document.getElementById('main-player');
-    const app = document.getElementById('app');
-    
-    document.querySelectorAll('div, iframe, ins, section, a').forEach(el => {
-        // Player, App aur Episode Grid ko mat chhedo
-        if (el === player || (app && app.contains(el)) || el.id === 'main-player') return;
-
-        const style = window.getComputedStyle(el);
-        const isFixed = style.position === 'fixed' || style.position === 'absolute';
-        
-        // Agar koi element bahut high z-index par hai ya screen cover kar raha hai
-        if (isFixed && (parseInt(style.zIndex) > 5 || el.offsetWidth >= window.innerWidth * 0.9)) {
-            console.log("🛡️ Shield: Purged invisible ad overlay");
-            el.remove();
-        }
-    });
-};
-
-// 2. AGGRESSIVE POPUP KILLER (Overwrites window.open)
-window.open = function() { 
-    console.log("🚫 Aura Shield: Blocked an attempted Popup/Redirect");
+// 1. GLOBAL NETWORK INTERCEPTOR (Popups ka baap)
+window.open = function(url) {
+    console.log("🚫 Aura Shield: Blocked redirect to ->", url);
     return null; 
 };
 
-// 3. MUTATION OBSERVER (Real-time safai)
-const observer = new MutationObserver(() => {
-    purgeAdLayers();
-    document.querySelectorAll('script, iframe').forEach(el => {
-        if (el.id === 'main-player') return;
-        const src = el.src || '';
-        if (BLACKLISTED_DOMAINS.some(d => src.toLowerCase().includes(d))) {
+// 2. ACTIVE ELEMENT DESTRUCTION (Jo tune video mein dikhaya)
+const neutralizeAds = () => {
+    const player = document.getElementById('main-player');
+    
+    // Sabhi elements check karo jo player ke bahar hain
+    document.querySelectorAll('a, iframe, div, ins, script').forEach(el => {
+        if (el === player || el.id === 'main-player' || el.closest('#episode-grid')) return;
+
+        const content = (el.src || el.href || el.outerHTML || '').toLowerCase();
+        
+        // Agar element hamari blacklist se match hota hai
+        if (AD_PATTERNS.some(pattern => pattern.test(content))) {
+            console.log("🛡️ Shield: Neutralized ad domain element");
             el.remove();
         }
-    });
-});
-observer.observe(document.body, { childList: true, subtree: true });
 
-// Har 500ms par ek backup scan
-setInterval(purgeAdLayers, 500);
+        // Invisible layers jo click chura rahi hain
+        const style = window.getComputedStyle(el);
+        if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex) > 10) {
+            if (!el.contains(player)) {
+                el.style.pointerEvents = 'none'; // Click ko aar-paar jaane do
+                el.style.display = 'none';
+                el.remove();
+            }
+        }
+    });
+};
+
+// 3. REAL-TIME PROTECTION (Har 300ms mein scan)
+setInterval(neutralizeAds, 300);
 
 // ==========================================
 // 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
@@ -73,7 +67,6 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 3D Hover & RGB Effects
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
