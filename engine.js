@@ -1,37 +1,58 @@
-// 1. NUCLEAR AD-BLOCKER (Brave Engine Clone)
-const blockAds = () => {
-    // Ye list un domains ko target karti hai jo background mein popup kholte hain
-    const adPatterns = ['pop', 'xtra', 'click', 'double', 'adsystem', 'propush', 'syndication'];
-    
-    document.querySelectorAll('iframe, script, a, div').forEach(el => {
-        const source = el.src || el.href || el.id || el.className || '';
-        if (adPatterns.some(pattern => source.toLowerCase().includes(pattern))) {
-            // Agar element player nahi hai aur ad jaisa dikh raha hai, toh uda do
-            if (el.id !== 'main-player') {
-                el.remove();
-            }
+/// 1. BRAVE-STYLE DOMAIN FILTER
+const BLACKLISTED_DOMAINS = [
+    '1xbet', 'oundhertobeconsist', 'muralssouth', 'polosanitizertrusting', 
+    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash'
+];
+
+// 2. NETWORK INTERCEPTOR
+const killAds = () => {
+    const allLinks = document.querySelectorAll('a, iframe, script');
+    allLinks.forEach(el => {
+        const url = el.src || el.href || '';
+        // FIX: domain ko check karne ka sahi tarika
+        const foundDomain = BLACKLISTED_DOMAINS.find(d => url.includes(d));
+        if (foundDomain) {
+            console.log(`🛡️ Aura Shield: Blocked ${foundDomain}`);
+            el.remove();
         }
     });
 };
 
-// Har 300ms mein scan karega (Pehle se tez)
-setInterval(blockAds, 300);
+// 3. THE "GHOST" LAYER KILLER
+const removeOverlays = () => {
+    // Apne HTML mein check kar ki player ka container div class 'video-container' hai ya nahi
+    const playerContainer = document.querySelector('.video-container'); 
+    if (!playerContainer) return;
 
-// 2. THE CLICK-JACKER RADAR (Sabse Important)
-// Ye har us invisible layer ko detect karega jo player ke upar banti hai click lene ke liye
-document.addEventListener('mousedown', (e) => {
-    const target = e.target;
-    // Agar click player par nahi hai, par wo pure screen par faila hua hai (ads ki technique)
-    if (target.id !== 'main-player' && (target.offsetWidth >= window.innerWidth * 0.5)) {
-        console.log("🛡️ Shield: Invisible Ad-Layer neutralized!");
-        target.style.pointerEvents = 'none'; // Click ko pass hone do
-        target.remove(); // Layer uda do
+    const children = document.body.children;
+    for (let i = 0; i < children.length; i++) {
+        const el = children[i];
+        const style = window.getComputedStyle(el);
+        // Player aur Main App ko chhod kar baaki high z-index layers ko hatao
+        if (el.id !== 'app' && el.id !== 'main-player' && style.position === 'absolute' && parseInt(style.zIndex) > 10) {
+            el.remove();
+        }
     }
-}, true);
+};
 
-// 3. POP-UP KILLER (No mercy)
-window.open = function() { return null; };
+// 4. POP-UP HIJACKER
+window.open = function(url) {
+    if (url && BLACKLISTED_DOMAINS.some(domain => url.includes(domain))) {
+        console.log("🚫 Brave Mode: Pop-up blocked!");
+        return null;
+    }
+    return null; 
+};
 
+// Scan timing
+setInterval(() => {
+    killAds();
+    removeOverlays();
+}, 500);
+
+// ============================================================
+// IS LINE KE NICHE TERA PURANA TMDB & SERVER LOGIC RAKHNA
+// ============================================================
 // 4. TMDB & SERVER LOGIC (With 3D Hover/Animations kept intact)
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; // Stranger Things
