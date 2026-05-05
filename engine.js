@@ -1,71 +1,77 @@
-// 1. BLACKLISTED DOMAINS
+// ==========================================
+// 🛡️ AURA-BRAVE ULTIMATE SHIELD ENGINE
+// ==========================================
+
 const BLACKLISTED_DOMAINS = [
     '1xbet', 'oundhertobeconsist', 'muralssouth', 'polosanitizertrusting', 
-    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash', 'syndication'
+    'iwmbuzz', 'marketdeath', 'propush', 'onclick', 'popads', 'popcash',
+    'pop', 'xtra', 'click', 'double', 'adsystem', 'syndication', 'doubleclick'
 ];
 
-// 2. AURA CLICK-RADAR (Sabse Powerful)
-// Ye har us invisible layer ko detect karega jo click rok rahi hai
-document.addEventListener('mousedown', (e) => {
-    const target = e.target;
+// 1. THE ULTIMATE PRIORITY SHIELD (Player ko King banata hai)
+const prioritizePlayer = () => {
     const player = document.getElementById('main-player');
+    if (player) {
+        player.style.zIndex = "999999"; 
+        player.style.position = "relative";
+        player.style.pointerEvents = "auto"; 
+    }
 
-    // Agar click player par nahi hai, par layer poori screen cover kar rahi hai
-    if (target !== player && (target.offsetWidth >= window.innerWidth * 0.5)) {
-        console.log("🛡️ Shield: Blocking Ghost Layer detected!");
-        
-        // Trick: Click ko layer ke "aar-paar" jaane do (Pointer Events None)
-        target.style.pointerEvents = 'none'; 
-        
-        // Aur us layer ko uda do
-        setTimeout(() => {
-            if (target && target.parentNode) target.remove();
-        }, 100);
+    // Baaki high z-index layers ko niche dhakelo
+    document.querySelectorAll('div, ins, iframe').forEach(el => {
+        if (el.id !== 'main-player' && !el.contains(player)) {
+            const style = window.getComputedStyle(el);
+            if (parseInt(style.zIndex) > 1000) {
+                el.style.zIndex = "1";
+                el.style.display = "none"; 
+            }
+        }
+    });
+};
+
+// 2. NUCLEAR CLICK PROTECTOR (Ghost Layers ko turant uda deta hai)
+document.addEventListener('click', (e) => {
+    const player = document.getElementById('main-player');
+    if (player && !player.contains(e.target) && e.target.tagName !== 'BUTTON') {
+        const style = window.getComputedStyle(e.target);
+        if (style.position === 'absolute' || style.position === 'fixed') {
+            console.log("🛡️ Shield: Invisible Ad Layer Neutralized!");
+            e.preventDefault();
+            e.stopPropagation();
+            e.target.remove(); 
+        }
     }
 }, true);
 
-// 3. THE ELEMENT KILLER
+// 3. BRAVE-STYLE POP-UP & NETWORK BLOCKER
+window.open = function() { return null; };
+
 const killAds = () => {
-    document.querySelectorAll('iframe, script, a, div').forEach(el => {
+    document.querySelectorAll('iframe, script, a').forEach(el => {
         if (el.id === 'main-player') return;
-        const source = el.src || el.href || el.id || el.className || '';
-        if (BLACKLISTED_DOMAINS.some(domain => source.toLowerCase().includes(domain))) {
+        const src = el.src || el.href || '';
+        if (BLACKLISTED_DOMAINS.some(d => src.toLowerCase().includes(d))) {
             el.remove();
         }
     });
 };
 
-// 4. SMART OVERLAY REMOVER
-const removeOverlays = () => {
-    const children = document.body.children;
-    for (let i = 0; i < children.length; i++) {
-        const el = children[i];
-        if (el.id === 'app' || el.id === 'main-player' || el.contains(document.getElementById('main-player'))) continue;
-
-        const style = window.getComputedStyle(el);
-        if (style.position === 'absolute' || style.position === 'fixed') {
-            if (parseInt(style.zIndex) > 10) {
-                el.remove();
-            }
-        }
-    }
-};
-
-// Brave Style Pop-up Blocker
-window.open = function() { return null; };
-
-// Har 400ms mein scan
+// Har 300ms mein scan check
 setInterval(() => {
+    prioritizePlayer();
     killAds();
-    removeOverlays();
-}, 400);
+}, 300);
 
 // ==========================================
-// 🎬 TMDB & SERVER LOGIC (NEET Aspirant's Core)
+// 🎬 TMDB & SERVER LOGIC (INDIPLEX Core)
 // ==========================================
+
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; 
-let currentS = 1, currentE = 1, currentServer = 'vidsrc';
+const TMDB_ID = '66732'; // Stranger Things
+
+let currentS = 1;
+let currentE = 1;
+let currentServer = 'vidsrc';
 
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
@@ -77,6 +83,7 @@ async function loadEpisodes(seasonNum) {
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
+            // 3D Hover & RGB Animations Intact
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -96,7 +103,9 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch(e) { console.log("TMDB Error"); }
+    } catch (err) {
+        console.error("TMDB Load Error:", err);
+    }
 }
 
 function updatePlayer() {
@@ -118,5 +127,6 @@ function switchServer(s) {
     updatePlayer(); 
 }
 
+// Start the Engine
 loadEpisodes(1);
 updatePlayer();
