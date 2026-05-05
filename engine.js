@@ -1,71 +1,67 @@
 // ==========================================
-// 🛡️ THE IMMUNE SYSTEM: UNIVERSAL AD-PURGE
+// 🧠 THE NEURAL BYPASS: ZERO FRICTION
 // ==========================================
 
 (function() {
-    console.log("⚡ INDIPLEX: Immune System Active. Nuke-all protocol engaged.");
+    console.log("⚡ INDIPLEX: Neural Bypass Engaged. Clearing the Synaptic Cleft...");
 
-    // 1. NETWORK FILTER (Blocking the source)
-    const adKeywords = ['proads', 'onclick', 'rhtads', 'mndsrv', 'popads', 'bit.ly', 'doubleclick'];
-    
-    const originalFetch = window.fetch;
-    window.fetch = function() {
-        if (adKeywords.some(keyword => arguments[0].includes(keyword))) {
-            return Promise.reject(new Error("🛡️ Immune System: Ad Source Blocked"));
-        }
-        return originalFetch.apply(this, arguments);
+    // 1. THE STEALTH OPENER
+    // Player ko lagega usne popup khola, par hum use "Invisible" kar denge
+    const originalOpen = window.open;
+    window.open = function(url, target, features) {
+        console.log("🛡️ Intercepted Ad-Click to:", url);
+        // Hum ek dummy object return karenge taaki player crash na ho
+        return { 
+            closed: false, 
+            focus: () => {}, 
+            close: () => { this.closed = true; },
+            location: { href: url }
+        };
     };
 
-    // 2. THE SCRIPT PURGER (Deep Scan)
-    const purgeScripts = () => {
-        document.querySelectorAll('script').forEach(s => {
-            // Agar script ka source suspicious hai, toh use udao
-            if (s.src && adKeywords.some(kw => s.src.includes(kw))) {
-                s.remove();
-            }
-        });
-    };
-
-    // 3. AGGRESSIVE LAYER NUKER (Refined)
-    const layerNuker = () => {
-        const player = document.getElementById('main-player');
-        if (!player) return;
-
-        // Player ko priority 1 par rakho
-        player.style.setProperty('z-index', '2147483647', 'important');
-        player.style.setProperty('pointer-events', 'auto', 'important');
-
-        const elements = document.querySelectorAll('body > div, body > iframe');
-        elements.forEach(el => {
-            if (el.id !== 'app' && el.id !== 'main-player') {
-                const z = window.getComputedStyle(el).zIndex;
-                // Agar kuch bhi player ke upar aane ki koshish kare, udao
-                if (parseInt(z) > 100 || el.style.position === 'fixed') {
-                    el.style.display = 'none';
-                    el.remove();
+    // 2. SURGICAL LAYER NUKER (Mutation Observer)
+    // Ye 'setInterval' se 10x fast aur "Smart" hai
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Check if it's an Element
+                    const style = window.getComputedStyle(node);
+                    const isFixed = style.position === 'fixed' || style.position === 'absolute';
+                    
+                    // Agar koi div player ke upar 'Fixed' hokar baitha hai, toh wo Virus hai
+                    if (isFixed && node.id !== 'main-player' && !node.closest('#episode-grid')) {
+                        node.style.setProperty('display', 'none', 'important');
+                        node.style.setProperty('pointer-events', 'none', 'important');
+                        node.remove(); 
+                    }
                 }
-            }
+            });
         });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // 3. POINTER-EVENT TUNNEL
+    // Forcefully ensure player is clickable
+    const fixPlayer = () => {
+        const p = document.getElementById('main-player');
+        if(p) {
+            p.style.pointerEvents = 'auto';
+            p.style.zIndex = '10';
+        }
     };
-
-    // Har 100ms mein scan (Quantum Speed)
-    setInterval(() => {
-        layerNuker();
-        purgeScripts();
-    }, 100);
-
-    // 4. POPUP VIRTUALIZATION
-    window.open = () => ({ closed: false, focus: () => {}, close: () => {} });
+    setInterval(fixPlayer, 500);
 })();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: ABYSSAL VOID (NO SKIPS)
+// 🎬 INDIPLEX CORE: ALL FEATURES INTACT
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
+// Never skip animations or code elements
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
@@ -77,7 +73,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 PRESERVING: 3D Hover & RGB Glow
+            // 💎 "Ek Number" Effects: 3D Hover/RGB strictly kept
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -95,7 +91,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 TMDB Error"); }
+    } catch (e) { console.error("🚨 Neural Link Error"); }
 }
 
 function updatePlayer() {
@@ -109,8 +105,11 @@ function updatePlayer() {
     
     if (player) {
         player.src = urls[currentServer];
-        // Focus player for direct signals
-        player.onload = () => { player.focus(); };
+        // Ensure player is ready for interaction
+        player.onload = () => { 
+            player.focus(); 
+            console.log("🎬 Video Stream Ready.");
+        };
     }
 }
 
