@@ -1,55 +1,53 @@
-// ==============================================================================
-// 🛡️ THE PHANTASM BYPASS: THE ULTIMATE AD-TRAP BREAKER
-// ==============================================================================
+// ==========================================
+// 🛡️ THE QUANTUM BRIDGE: INVISIBLE LAYER NUKER
+// ==========================================
 
 (function() {
-    console.log("⚡ INDIPLEX: Phantasm Mode Engaged. Breaking Ad-Trap...");
+    console.log("⚡ INDIPLEX: Quantum Bridge Activated. Nuking invisible layers...");
 
-    // 1. THE GHOST WINDOW (Billion IQ Fake-Out)
-    // Hum window.open ko ek aise 'Proxy' se replace karenge jo 
-    // Player ko hamesha "Success" ka signal bhejega.
-    const windowHandler = {
-        get: function(target, prop) {
-            if (prop === 'closed') return false; // Player ko lagega window abhi bhi khuli hai
-            return function() { return true; }; // Saare functions (focus/blur) ko success dikhao
-        }
-    };
-
-    const fakeWindow = new Proxy({}, windowHandler);
-
+    // 1. THE PHANTOM WINDOW (Popup Fake-Out)
+    // Player ko lagega popup khul gaya, wo 'Play' unlock kar dega
     window.open = function() {
-        console.log("🛡️ Phantasm: Intercepted ad-click. Sending fake 'Success' signal to player.");
-        return fakeWindow; // Player ko lagega popup khul gaya, wo video chalayega
+        console.log("🛡️ Bridge: Intercepted popup. Sending 'Success' to player.");
+        return { closed: false, focus: () => {}, close: () => { this.closed = true; } };
     };
 
-    // 2. THE CLICK-THROUGH TUNNEL
-    // Ye code ensure karega ki player ke upar koi bhi invisible ad-layer na rahe
-    const clearPath = () => {
+    // 2. THE LAYER NUKER (Billion IQ Move)
+    // Ye function player ke upar ki har us cheez ko udayega jo click rok rahi hai
+    const nukeInvisibleLayers = () => {
         const player = document.getElementById('main-player');
         if (!player) return;
 
-        // Player ko sabse upar laao
+        // Player ko physical priority do
         player.style.setProperty('z-index', '2147483647', 'important');
         player.style.setProperty('pointer-events', 'auto', 'important');
+        player.style.setProperty('position', 'relative', 'important');
 
-        // Baaki sab fixed kachra uda do jo click rok raha hai
-        document.querySelectorAll('div, iframe, section').forEach(el => {
+        // Sabhi divs ko scan karo jo player ke upar 'Fixed' ya 'Absolute' hain
+        const allDivs = document.querySelectorAll('div, iframe, section, ins');
+        allDivs.forEach(el => {
             if (el.id !== 'app' && el.id !== 'main-player' && !el.closest('#episode-grid')) {
-                const s = window.getComputedStyle(el);
-                if ((s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 100) {
+                const style = window.getComputedStyle(el);
+                const isOverlay = style.position === 'fixed' || style.position === 'absolute';
+                const isHidden = style.opacity === '0' || style.backgroundColor === 'transparent' || style.visibility === 'hidden';
+                
+                // Agar wo element player ke upar hai aur invisible hai, toh wo pakka AD hai
+                if (isOverlay && (parseInt(style.zIndex) > 100 || isHidden)) {
                     el.style.setProperty('display', 'none', 'important');
                     el.style.setProperty('pointer-events', 'none', 'important');
+                    el.remove(); // Physically delete the ad-layer
                 }
             }
         });
     };
 
-    setInterval(clearPath, 300);
+    // Har 200ms mein deewar saaf karo
+    setInterval(nukeInvisibleLayers, 200);
 })();
 
-// ==============================================================================
-// 🎬 INDIPLEX CORE: ZERO SKIPS (ALL FEATURES & ANIMATIONS)
-// ==============================================================================
+// ==========================================
+// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
+// ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
@@ -66,8 +64,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            
-            // 💎 THE "EK NUMBER" STUFF: 3D Hover & RGB Glow intact
+            // 💎 EK NUMBER VISUALS: 3D Tilt & RGB Glow preserved
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -85,7 +82,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 TMDB Loading Failed"); }
+    } catch (e) { console.error("🚨 TMDB Error"); }
 }
 
 function updatePlayer() {
@@ -98,11 +95,10 @@ function updatePlayer() {
     };
     
     if (player) {
-        // NO SANDBOX (Player khushi-khushi load hoga)
-        player.removeAttribute('sandbox'); 
+        player.removeAttribute('sandbox'); // Sandbox hataya taaki native speed mile
         player.src = urls[currentServer];
         
-        // Auto-Focus for Immediate Keyboard Control
+        // Signal Injection: Player ko keyboard command b bhejne ke liye focus rakho
         player.onload = () => {
             setTimeout(() => { player.focus(); }, 1000);
         };
