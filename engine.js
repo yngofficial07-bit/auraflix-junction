@@ -1,40 +1,41 @@
-// 1. BRAVE-STYLE REQUEST BLOCKER
-const AD_BLOCK_LIST = [
-    'popcash.net', 'propellerads.com', 'adsterra.com', 'doubleclick.net',
-    'onclickads.net', 'exoclick.com', 'juicyads.com', 'daisyad.com'
-];
-
+// 1. NUCLEAR AD-BLOCKER (Brave Engine Clone)
 const blockAds = () => {
-    document.querySelectorAll('script, iframe, a').forEach(el => {
-        const source = el.src || el.href || '';
-        if (AD_BLOCK_LIST.some(adDomain => source.includes(adDomain))) {
-            el.remove();
+    // Ye list un domains ko target karti hai jo background mein popup kholte hain
+    const adPatterns = ['pop', 'xtra', 'click', 'double', 'adsystem', 'propush', 'syndication'];
+    
+    document.querySelectorAll('iframe, script, a, div').forEach(el => {
+        const source = el.src || el.href || el.id || el.className || '';
+        if (adPatterns.some(pattern => source.toLowerCase().includes(pattern))) {
+            // Agar element player nahi hai aur ad jaisa dikh raha hai, toh uda do
+            if (el.id !== 'main-player') {
+                el.remove();
+            }
         }
     });
 };
-setInterval(blockAds, 500);
 
-// 2. THE "POP-UP KILLER" (Sniper 2.0)
-window.open = function() { 
-    console.log("🚫 Sniper: Pop-up attempt blocked!");
-    return null; 
-};
+// Har 300ms mein scan karega (Pehle se tez)
+setInterval(blockAds, 300);
 
-// 3. TRANSPARENT OVERLAY NUKER
-document.addEventListener('click', (e) => {
+// 2. THE CLICK-JACKER RADAR (Sabse Important)
+// Ye har us invisible layer ko detect karega jo player ke upar banti hai click lene ke liye
+document.addEventListener('mousedown', (e) => {
     const target = e.target;
-    if (target.id !== 'main-player' && (target.offsetWidth > window.innerWidth * 0.9)) {
-        target.remove();
+    // Agar click player par nahi hai, par wo pure screen par faila hua hai (ads ki technique)
+    if (target.id !== 'main-player' && (target.offsetWidth >= window.innerWidth * 0.5)) {
+        console.log("🛡️ Shield: Invisible Ad-Layer neutralized!");
+        target.style.pointerEvents = 'none'; // Click ko pass hone do
+        target.remove(); // Layer uda do
     }
 }, true);
 
-// 4. TMDB & SERVER LOGIC + ANIMATIONS
-const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; 
+// 3. POP-UP KILLER (No mercy)
+window.open = function() { return null; };
 
-let currentS = 1;
-let currentE = 1;
-let currentServer = 'vidsrc'; 
+// 4. TMDB & SERVER LOGIC (With 3D Hover/Animations kept intact)
+const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
+const TMDB_ID = '66732'; // Stranger Things
+let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
@@ -45,7 +46,7 @@ async function loadEpisodes(seasonNum) {
 
     data.episodes.forEach(epi => {
         const card = document.createElement('div');
-        // RGB aur 3D Hover ke liye classes intact rakhi hain
+        // INDIPLEX project ke 3D/RGB elements intact rakhe hain
         card.className = 'episode-card tilt-effect rgb-glow'; 
         const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
         
@@ -67,28 +68,24 @@ async function loadEpisodes(seasonNum) {
     });
 }
 
-function switchServer(serverType) {
-    currentServer = serverType;
-    // Server UI logic fix
-    document.querySelectorAll('.server-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if(btn.innerText.toLowerCase().includes(serverType)) {
-            btn.classList.add('active');
-        }
-    });
-    updatePlayer();
-}
-
 function updatePlayer() {
     const player = document.getElementById('main-player');
-    let url = "";
-    if(currentServer === 'vidsrc') url = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`;
-    else if(currentServer === 'vidlink') url = `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}`;
-    else if(currentServer === 'moviesapi') url = `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`;
-    
-    player.src = url;
+    const urls = {
+        vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`,
+        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`
+    };
+    player.src = urls[currentServer];
 }
 
-// Initial Load
+function switchServer(s) { 
+    currentServer = s; 
+    document.querySelectorAll('.server-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.innerText.toLowerCase().includes(s)) btn.classList.add('active');
+    });
+    updatePlayer(); 
+}
+
 loadEpisodes(1);
 updatePlayer();
