@@ -1,42 +1,41 @@
 // ==========================================
-// 🛡️ OMNI-BYPASS: CLICK-THROUGH LOGIC
+// 🛡️ THE HIJACKER: EVENT INTERCEPTION TECH
 // ==========================================
 
-const bypassShield = () => {
-    // 1. Sabhi possible ad-layers ko 'Click-Through' banao
-    const selectors = 'div, iframe, ins, section, a';
-    document.querySelectorAll(selectors).forEach(el => {
-        // Hamare safe elements
-        const isSafe = el.id === 'app' || 
-                       el.id === 'main-player' || 
-                       el.closest('#episode-grid') || 
-                       el.closest('.server-options') ||
-                       el.classList.contains('rgb-glow');
-
-        if (!isSafe) {
-            const style = window.getComputedStyle(el);
-            // Agar ye fixed hai ya player ke upar hai, toh isse click-power chheen lo
-            if (style.position === 'fixed' || style.position === 'absolute' || parseInt(style.zIndex) > 1) {
-                el.style.pointerEvents = 'none'; // Click iske aar-paar jayega
-                el.style.userSelect = 'none';
-                el.style.opacity = '0'; // Invisible but doesn't crash the site
-            }
+(function() {
+    // 1. HIJACKING THE BROWSER'S EAR (addEventListener)
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+        if (type === 'click' || type === 'mousedown' || type === 'mouseup') {
+            const wrappedListener = function(e) {
+                // Agar click kisi aisi jagah ho raha hai jo player nahi hai...
+                // Aur wo click ad-related domains ya popups trigger kar raha hai...
+                if (e.target && !e.target.closest('#main-player') && !e.target.closest('#episode-grid')) {
+                    const isShady = /pop|click|ad|link/i.test(e.target.className + e.target.id);
+                    if (isShady) {
+                        console.log("🛡️ Hijacker: Neutralized a shady event.");
+                        e.stopImmediatePropagation(); // Event ko yahi khatam karo
+                        return;
+                    }
+                }
+                // Agar sab theek hai, toh original function chalne do
+                return listener.apply(this, arguments);
+            };
+            return originalAddEventListener.call(this, type, wrappedListener, options);
         }
-    });
+        return originalAddEventListener.call(this, type, listener, options);
+    };
 
-    // 2. Player ko Forcefully interactable banao
-    const player = document.getElementById('main-player');
-    if (player) {
-        player.style.pointerEvents = 'auto';
-        player.style.zIndex = '100'; // Player ko sabse upar rakho
-    }
-};
-
-// Har 100ms mein scan (Super Fast)
-setInterval(bypassShield, 100);
+    // 2. THE "FAKE-AD" FLAG (Bypassing Anti-Adblock)
+    // Ye code player ko jhoot bolega ki "Haan, ad chal raha hai"
+    window.canRunAds = true;
+    window.isAdBlocked = false;
+    window.adsAllowed = true;
+})();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: NO FEATURES SKIPPED
+// 🎬 INDIPLEX CORE (No Features Skipped)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -45,34 +44,24 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
-    try {
-        const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
-        const data = await res.json();
-        const grid = document.getElementById('episode-grid');
-        if(!grid) return;
-        
-        grid.innerHTML = ''; 
-        data.episodes.forEach(epi => {
-            const card = document.createElement('div');
-            card.className = 'episode-card tilt-effect rgb-glow'; // 3D/RGB Effects
-            
-            card.innerHTML = `
-                ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
-                <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
-                <div class="epi-info">
-                    <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                </div>
-            `;
-            // Direct click handler
-            card.onclick = (e) => {
-                e.preventDefault();
-                currentE = epi.episode_number;
-                updatePlayer();
-                loadEpisodes(currentS);
-            };
-            grid.appendChild(card);
-        });
-    } catch (e) { console.error("TMDB Error"); }
+    const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
+    const data = await res.json();
+    const grid = document.getElementById('episode-grid');
+    if(!grid) return;
+    
+    grid.innerHTML = ''; 
+    data.episodes.forEach(epi => {
+        const card = document.createElement('div');
+        card.className = 'episode-card tilt-effect rgb-glow'; // 3D/RGB Effects
+        card.innerHTML = `
+            ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
+            <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
+            <div class="epi-info">
+                <div class="epi-title">E${epi.episode_number}</div>
+            </div>`;
+        card.onclick = () => { currentE = epi.episode_number; updatePlayer(); loadEpisodes(currentS); };
+        grid.appendChild(card);
+    });
 }
 
 function updatePlayer() {
@@ -92,6 +81,11 @@ function switchServer(s) {
     });
     updatePlayer(); 
 }
+
+// Global Purge (Cleanup unwanted scripts)
+setInterval(() => {
+    document.querySelectorAll('script[src*="frs2c"], script[src*="wiestunvote"]').forEach(s => s.remove());
+}, 2000);
 
 document.addEventListener('DOMContentLoaded', () => {
     loadEpisodes(1);
