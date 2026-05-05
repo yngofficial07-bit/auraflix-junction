@@ -1,46 +1,47 @@
 // ==========================================
-// 🛡️ AURA-BRAVE STEALTH ENGINE (ANTI-AD/POPUP)
+// 🛡️ AURA-BRAVE STEALTH ENGINE (SAFE VERSION)
 // ==========================================
 
 const AD_PATTERNS = [
     /oundhertobeconsist/i, /frs2c/i, /v2006/i, /wiestunvote/i, 
     /painamour/i, /twasmerelyhers/i, /milvussorel/i, /havingwacks/i,
-    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i,
-    /syndication/i, /doubleclick/i, /adservice/i
+    /raklls/i, /casino/i, /crypto/i, /1xbet/i, /onclick/i, /popads/i
 ];
 
-// 1. POPUP KILLER
 window.open = function() { return null; };
 
-// 2. DOMAIN & OVERLAY PURGE
 const neutralizeAds = () => {
-    const player = document.getElementById('main-player');
-    const app = document.getElementById('app');
+    // 1. Sirf un cheezon ko dhoondo jo hamare structure ka hissa nahi hain
+    document.querySelectorAll('iframe, div, ins, a').forEach(el => {
+        // Safe Zones: Inhe kabhi mat hatana
+        if (el.id === 'main-player' || 
+            el.closest('#episode-grid') || 
+            el.closest('.server-options') || 
+            el.id === 'app') return;
 
-    document.querySelectorAll('a, iframe, div, ins, script').forEach(el => {
-        if (el === player || el.id === 'main-player' || el.closest('#episode-grid') || (app && app.contains(el))) return;
-
-        const content = (el.src || el.href || el.outerHTML || '').toLowerCase();
+        const content = (el.src || el.href || '').toLowerCase();
         
-        // Target specific ad domains from your links
+        // 2. Sirf Blacklisted Domains ko udao
         if (AD_PATTERNS.some(pattern => pattern.test(content))) {
             el.remove();
+            return;
         }
 
-        // Auto-remove invisible blocking layers
+        // 3. Invisible Overlays (Agar player ke upar koi 'fixed' div hai)
         const style = window.getComputedStyle(el);
-        if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex) > 10) {
-            el.style.pointerEvents = 'none'; 
-            el.style.display = 'none';
-            el.remove();
+        if (style.position === 'fixed' && parseInt(style.zIndex) > 100) {
+            // Agar ye div poori screen cover kar raha hai toh hi udao
+            if (el.offsetWidth > window.innerWidth * 0.8) {
+                el.remove();
+            }
         }
     });
 };
 
-setInterval(neutralizeAds, 300);
+setInterval(neutralizeAds, 1000); // 1 second gap for stability
 
 // ==========================================
-// 🎬 INDIPLEX CORE LOGIC (TMDB & SERVERS)
+// 🎬 INDIPLEX CORE (TMDB, Servers, 3D/RGB)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -50,18 +51,18 @@ let currentS = 1;
 let currentE = 1;
 let currentServer = 'vidsrc';
 
-// 3. LOAD EPISODES (With 3D Hover & RGB Intact)
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
         const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
         const data = await response.json();
         const grid = document.getElementById('episode-grid');
+        if (!grid) return;
+        
         grid.innerHTML = ''; 
 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 'Ek Number' Effects: 3D Hover & RGB Glow
             card.className = 'episode-card tilt-effect rgb-glow'; 
             const playingBadge = (epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : '';
             
@@ -86,7 +87,6 @@ async function loadEpisodes(seasonNum) {
     }
 }
 
-// 4. SERVER SWITCHER & PLAYER UPDATE
 function updatePlayer() {
     const player = document.getElementById('main-player');
     const urls = {
@@ -95,24 +95,19 @@ function updatePlayer() {
         moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
         videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
-    if (player) {
-        player.src = urls[currentServer];
-    }
+    if (player) player.src = urls[currentServer];
 }
 
-// Ye raha Server UI wala part jo skip ho gaya tha
 function switchServer(s) { 
     currentServer = s; 
     document.querySelectorAll('.server-btn').forEach(btn => {
-        btn.classList.remove('active');
-        // Match server name to button text
-        if(btn.innerText.toLowerCase().includes(s)) {
-            btn.classList.add('active');
-        }
+        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(s));
     });
     updatePlayer(); 
 }
 
-// Initialization
-loadEpisodes(1);
-updatePlayer();
+// Kickstart
+document.addEventListener('DOMContentLoaded', () => {
+    loadEpisodes(1);
+    updatePlayer();
+});
