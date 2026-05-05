@@ -1,3 +1,25 @@
+let clickCount = 0;
+
+// Shield element ko pakdo
+const shield = document.getElementById('ad-shield');
+
+if (shield) {
+    shield.onclick = function() {
+        clickCount++;
+        console.log(`Ad-Shield: Click ${clickCount} captured!`);
+
+        // Pehle 2 click par sirf ad trigger hone denge (jo Brave/Extension block kar dega)
+        // Ya user manually pop-up band karega. 
+        // 3rd click par hum rasta saaf kar denge.
+        if (clickCount >= 2) {
+            shield.classList.add('hidden'); // Shield gayab!
+            console.log("Shield Disabled. Now you can play.");
+        }
+    };
+}
+
+
+
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; // Stranger Things (Example)
 
