@@ -2,44 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AuraFlix Junction - Lab</title>
+    <title>INDIPLEX - Watch</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="watch-container">
-       <!-- Cineb Player Engine -->
         <div class="player-section">
-           <iframe id="main-player" src="" frameborder="0" allowfullscreen></iframe>
-           
-           <!-- Bas ye niche wali line add hui hai -->
-           <div id="ad-shield" class="ad-shield"></div>
+            <iframe 
+                id="main-player" 
+                src="" 
+                frameborder="0" 
+                allowfullscreen
+                allow="autoplay; fullscreen; picture-in-picture"
+                referrerpolicy="no-referrer">
+            </iframe>
         </div>
-        <div class="server-container">
-    <span class="server-label">Servers:</span>
-    <div id="server-list" class="server-list">
-        <button class="server-btn active" onclick="switchServer('vidsrc')">VidSrc</button>
-        <button class="server-btn" onclick="switchServer('vidlink')">VidLink</button>
-        <button class="server-btn" onclick="switchServer('moviesapi')">MoviesAPI</button>
-        <button class="server-btn" onclick="switchServer('videasy')">VidEasy</button>
-    </div>
-</div>
 
-        <!-- Netflix Style Episode Section -->
+        <div class="server-container">
+            <span class="server-label">Servers:</span>
+            <div id="server-list" class="server-list">
+                <button class="server-btn active" data-server="vidsrc"    onclick="switchServer('vidsrc')">VidSrc</button>
+                <button class="server-btn"         data-server="vidlink"  onclick="switchServer('vidlink')">VidLink</button>
+                <button class="server-btn"         data-server="moviesapi"onclick="switchServer('moviesapi')">MoviesAPI</button>
+                <button class="server-btn"         data-server="videasy"  onclick="switchServer('videasy')">VidEasy</button>
+            </div>
+        </div>
+
         <div class="episodes-wrapper">
             <div class="episodes-header">
                 <h2>Episodes</h2>
                 <span id="episode-count">0 episodes</span>
             </div>
-
-            <div id="season-chips" class="season-selector">
-                <!-- Seasons dynamic aayenge -->
-            </div>
-
-            <div id="episode-grid" class="episode-grid">
-                <!-- Episode Cards yahan generate honge -->
-            </div>
+            <div id="season-chips" class="season-selector"></div>
+            <div id="episode-grid" class="episode-grid"></div>
         </div>
     </div>
+
     <script src="engine.js"></script>
 </body>
 </html>
