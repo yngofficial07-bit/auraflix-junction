@@ -1,56 +1,71 @@
 // ==========================================
-// 🛡️ THE BIOS OVERRIDE: CLICK TUNNELING
+// 🧠 THE GHOST-TOUCH PROTOCOL: AD-LAYER BYPASS
 // ==========================================
 
 (function() {
-    console.log("⚡ INDIPLEX: BIOS Override Active. Forcing Action Potential...");
+    console.log("⚡ INDIPLEX: Ghost-Touch Protocol Active.");
 
-    // 1. THE AD-SIMULATOR (Billion IQ Move)
-    // Player ko lagega ki ad chal gaya, isliye wo video unlock kar dega
+    // 1. THE AD-FEEDER (Seducing the Player)
+    // Hum window.open ko hijack karke player ko wo "Stimulus" denge jo use chahiye
     const ghostWindow = {
         closed: false,
-        focus: function() {},
+        focus: () => {},
         close: function() { this.closed = true; },
         location: { href: "" }
     };
 
-    window.open = function() {
-        console.log("🛡️ Override: Feeding fake click-success to player.");
+    window.open = function(url) {
+        console.log("🛡️ Ghost-Touch: Intercepted ad-request. Feeding fake success.");
+        // Player ko lagega ad khul gaya, isliye wo play-lock hata dega
         return ghostWindow; 
     };
 
-    // 2. POINTER EVENT RECOVERY (High Frequency)
-    // Har 50ms mein player ki clickable state ko "Reset" karega
-    const forceInteraction = () => {
-        const player = document.getElementById('main-player');
-        if (!player) return;
+    // 2. THE CLICK TUNNEL (The "Billion IQ" Part)
+    // Hum player ke upar ek invisible "Shield" rakhenge
+    const setupShield = () => {
+        const playerContainer = document.querySelector('.player-container'); // Tera container class
+        if (!playerContainer || document.getElementById('click-shield')) return;
 
-        // Forcefully enable interaction on the iframe itself
-        player.style.setProperty('pointer-events', 'auto', 'important');
-        player.style.setProperty('user-select', 'none', 'important');
-        player.setAttribute('tabindex', '0'); // For keyboard focus
+        const shield = document.createElement('div');
+        shield.id = 'click-shield';
+        shield.style = `
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2147483647; cursor: pointer; background: transparent;
+        `;
 
-        // Nuke any div that tries to sit on top of the player
-        const bodyChildren = document.body.children;
-        for (let i = 0; i < bodyChildren.length; i++) {
-            const el = bodyChildren[i];
-            if (el.id !== 'app' && el.id !== 'main-player' && !el.closest('#episode-grid')) {
-                const z = window.getComputedStyle(el).zIndex;
-                if (parseInt(z) > 5 || el.style.position === 'fixed') {
-                    el.style.display = 'none';
-                    el.style.pointerEvents = 'none';
-                }
-            }
-        }
+        // Jab user is shield par click karega...
+        shield.onclick = function(e) {
+            console.log("🎯 Shield: Tunneling click to player core...");
+            
+            // Step A: Fake the popup signal
+            window.open("about:blank");
+
+            // Step B: Temporarily disable the shield to let the real click hit the video
+            shield.style.pointerEvents = 'none';
+            
+            // Step C: Automatically bring the shield back after 500ms to block the next ad
+            setTimeout(() => {
+                shield.style.pointerEvents = 'auto';
+            }, 500);
+        };
+
+        playerContainer.appendChild(shield);
     };
 
-    // Surgical speed (Physics style: High Frequency = Low Friction)
-    setInterval(forceInteraction, 50);
+    setInterval(setupShield, 1000);
 
+    // 3. AGGRESSIVE SCRIPT PURGE
+    const nukeAds = () => {
+        const badSelectors = ['iframe[src*="ads"]', 'div[class*="ad-"]', 'div[id*="ad-"]', '.pop-under', '.overlay-ads'];
+        badSelectors.forEach(s => {
+            document.querySelectorAll(s).forEach(el => el.remove());
+        });
+    };
+    setInterval(nukeAds, 500);
 })();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (100% FEATURES)
+// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (NO SKIPS)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -68,7 +83,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 EK NUMBER: 3D Tilt & RGB Glow are NEVER removed
+            // 💎 "Ek Number" Swag: 3D Tilt & RGB Glow strictly intact
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -86,7 +101,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 BIOS: Interface Error"); }
+    } catch (e) { console.error("🚨 Neural Error"); }
 }
 
 function updatePlayer() {
@@ -99,14 +114,9 @@ function updatePlayer() {
     };
     
     if (player) {
-        // Clear sandbox but keep essential permissions
-        player.removeAttribute('sandbox'); 
+        player.removeAttribute('sandbox'); // Removed for native interaction
         player.src = urls[currentServer];
-        
-        player.onload = () => {
-            console.log("🎬 Stream Unlocked.");
-            player.focus();
-        };
+        player.onload = () => { player.focus(); };
     }
 }
 
