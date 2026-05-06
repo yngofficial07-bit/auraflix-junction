@@ -1,5 +1,5 @@
 // ==========================================
-// 🎬 INDIPLEX ENGINE - INTERCEPTOR v3.5
+// 🌌 INDIPLEX - THE ABYSSAL VOID v4.0
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -7,98 +7,86 @@ const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 // ==========================================
-// 🛡️ ADVANCED AD-BLOCKER & POPUP HIJACK
+// ✨ INTRO & 3D RGB ANIMATIONS (INTACT)
 // ==========================================
-(function blockAds() {
-    const AD_DOMAINS = [
-        'googlesyndication', 'doubleclick', 'googleadservices',
-        'adservice', 'amazon-adsystem', 'ads.', 'ad.', 'adserver',
-        'popads', 'popcash', 'trafficjunky', 'exoclick', 'juicyads',
-        'adsterra', 'propellerads', 'hilltopads', 'adcash',
-        'valueimpression', 'revcontent', 'taboola', 'outbrain',
-        'popunder', 'clickunder', 'go.oclasrv', 'adskeeper',
-        'bidvertiser', 'adclick', 'onclick', 'onclickads',
-        'sublimemedia', 'adnium', 'plugrush', 'trafficstars',
-        'hilltopads', 'richpush', 'pushground', 'evadav',
-        'dataprovider', 'mgid', 'content.ad', 'zedo',
-        'ero-advertising', 'tubecorporate', 'trafficfactory'
-    ];
+function initVisuals() {
+    // Original Intro Logic
+    const intro = document.getElementById('intro-overlay');
+    if(intro) {
+        setTimeout(() => {
+            intro.style.opacity = '0';
+            setTimeout(() => intro.remove(), 1000);
+        }, 2500);
+    }
 
-    // Popup Hijack
-    const _open = window.open.bind(window);
-    window.open = function(url, ...args) {
-        if (!url) return null;
-        const isAd = AD_DOMAINS.some(d => url.includes(d));
-        if (isAd) {
-            console.log('🛡️ Ad blocked:', url);
-            return { closed: false, focus: ()=>{}, close: ()=>{}, location: { href: '' } };
-        }
-        return _open(url, ...args);
-    };
-
-    // Fake click simulation - popup trigger block
-    document.addEventListener('click', function(e) {
-        if (e.target.tagName === 'IFRAME') {
-            e.stopPropagation();
-        }
-    }, true);
-
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(m => {
-            m.addedNodes.forEach(node => {
-                if (node.nodeType !== 1) return;
-                const src = node.src || node.href || '';
-                const isAdNode = AD_DOMAINS.some(d => src.includes(d));
-                const isAdClass = ['pop-under','overlay-ad','ad-container','ad-overlay']
-                    .some(c => node.className && node.className.includes(c));
-                if (isAdNode || isAdClass) {
-                    node.remove();
-                    console.log('🛡️ Ad element removed');
-                }
-            });
+    // 3D Hover Effect for Cards
+    document.addEventListener('mousemove', (e) => {
+        const cards = document.querySelectorAll('.episode-card, .server-btn');
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (x > 0 && y > 0 && x < rect.width && y < rect.height) {
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }
         });
     });
-
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-})();
+}
 
 // ==========================================
-// 📺 PLAYER & M3U8 SNIFFER LOGIC
+// 🛰️ STREAM SNATCHER ENGINE (V4.0 Logic)
+// ==========================================
+async function snatchStream(tmdb, s, e) {
+    console.log("🕵️ Sniffing for master.m3u8...");
+    try {
+        const response = await fetch(`/api/extract?tmdb=${tmdb}&s=${s}&e=${e}`);
+        const data = await response.json();
+        if (data.success && data.embedUrl) return data.embedUrl;
+    } catch (err) {
+        console.warn("Snatcher fallback initiated.");
+    }
+    return null;
+}
+
+// ==========================================
+// 🚀 PLAYER CORE (With Ad-Shield)
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    player.src = ''; // Flush old content
-
-    // Hum Vidlink ko default banate hain kyunki wo m3u8 extract hone deta hai
+    player.src = ''; 
     const urls = {
         vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
+        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff`,
         vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
     const targetUrl = urls[currentServer] || urls.vidsrc;
-    
-    // Yahan hum surgical extraction try karte hain
-    try {
-        const response = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
-        const data = await response.json();
-        
-        if (data.success && data.m3u8Url) {
-            // Agar m3u8 mil gaya, toh apne clean player.html mein load karo
-            player.src = `player.html?source=${encodeURIComponent(data.m3u8Url)}`;
-        } else {
-            // Fallback to direct embed if extraction fails
-            player.src = targetUrl;
-        }
-    } catch (e) {
+    const snatched = await snatchStream(TMDB_ID, currentS, currentE);
+
+    if (snatched && snatched.includes('.m3u8')) {
+        player.src = `player.html?source=${encodeURIComponent(snatched)}`;
+    } else {
+        // Sandbox for Ad-Blocking while keeping original servers
+        player.setAttribute('sandbox', 'allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation');
         player.src = targetUrl;
     }
 }
 
 // ==========================================
-// SEASONS & EPISODES (Intact - No changes)
+// 🛡️ CLICK & POPUP HIJACK
+// ==========================================
+(function injectShield() {
+    window.open = function() { return { closed: true, focus: ()=>{}, close: ()=>{} }; };
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'IFRAME') e.stopPropagation();
+    }, true);
+})();
+
+// ==========================================
+// 📺 UI COMPONENTS (Seasons & Episodes)
 // ==========================================
 async function initSeasons() {
     const seasonContainer = document.getElementById('season-chips');
@@ -122,7 +110,7 @@ async function initSeasons() {
             seasonContainer.appendChild(chip);
         });
         loadEpisodes(currentS);
-    } catch (error) { console.error('Season Error:', error); }
+    } catch (e) { console.error('UI Error:', e); }
 }
 
 async function loadEpisodes(seasonNum) {
@@ -131,9 +119,7 @@ async function loadEpisodes(seasonNum) {
         const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
         const data = await res.json();
         const grid = document.getElementById('episode-grid');
-        const countEl = document.getElementById('episode-count');
         if (!grid) return;
-        if (countEl) countEl.textContent = `${data.episodes.length} episodes`;
         grid.innerHTML = '';
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
@@ -141,10 +127,11 @@ async function loadEpisodes(seasonNum) {
             const thumb = epi.still_path ? `https://image.tmdb.org/t/p/w500${epi.still_path}` : 'https://via.placeholder.com/500x281?text=No+Preview';
             card.innerHTML = `
                 ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
-                <img class="epi-thumb" src="${thumb}" loading="lazy">
-                <div class="epi-info">
-                    <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                    <div class="epi-meta">${epi.runtime ? epi.runtime + ' min' : ''} ${epi.vote_average ? '⭐ ' + epi.vote_average.toFixed(1) : ''}</div>
+                <div class="card-inner">
+                    <img class="epi-thumb" src="${thumb}" loading="lazy">
+                    <div class="epi-info">
+                        <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
+                    </div>
                 </div>`;
             card.onclick = () => {
                 currentE = epi.episode_number;
@@ -153,7 +140,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error('Episode Error:', e); }
+    } catch (e) { console.error('Load Error:', e); }
 }
 
 function switchServer(s) {
@@ -164,7 +151,11 @@ function switchServer(s) {
     updatePlayer();
 }
 
+// ==========================================
+// 🔥 BOOT ENGINE
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    initVisuals();
     initSeasons();
     updatePlayer();
 });
