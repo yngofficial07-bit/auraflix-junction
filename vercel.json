@@ -1,1 +1,29 @@
-
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.themoviedb.org https://image.tmdb.org https://vidsrc.to https://vidlink.pro https://moviesapi.club https://player.vidsrc.nl https://vidsrc.xyz; frame-src https://vidsrc.to https://vidlink.pro https://moviesapi.club https://player.vidsrc.nl https://vidsrc.xyz; img-src 'self' https://image.tmdb.org data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "interest-cohort=()"
+        }
+      ]
+    }
+  ]
+}
