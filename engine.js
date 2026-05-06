@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.3 FINAL
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.3 FIXED
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -27,31 +27,24 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ PARENT-LEVEL PHANTOM WINDOW
-// Ye tab kaam aata hai jab iframe parent.window.open() call kare
+// 🛡️ PHANTOM WINDOW SHIELD
 // ==========================================
 (function phantomShield() {
     window.open = function(url) {
-        console.log('🛡️ Popup blocked at parent level:', url);
-        // Fake success object — player sochta hai popup khul gaya → video plays
+        console.log('🛡️ Popup blocked:', url);
         return {
             closed: false,
             focus:  () => {},
             blur:   () => {},
             close:  function() { this.closed = true; },
-            location: {
-                href: url || '',
-                assign:  () => {},
-                replace: () => {}
-            },
+            location: { href: url || '', assign: () => {}, replace: () => {} },
             document: { write: () => {}, close: () => {}, open: () => {} },
-            postMessage:       () => {},
-            addEventListener:  () => {},
+            postMessage: () => {},
+            addEventListener: () => {},
             removeEventListener: () => {}
         };
     };
 
-    // Bahar inject hone wale overlay/ad elements delete karo
     new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
@@ -71,20 +64,16 @@ function initVisuals() {
 
 // ==========================================
 // 🚀 PLAYER CORE
-// Sandbox: scripts allow, popups BLOCK
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    // ✅ STEP 1: Pehle sandbox set karo (src se PEHLE)
-    // allow-popups NAHI hai = iframe se koi bhi new tab nahi khulega
     player.setAttribute(
         'sandbox',
         'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
     );
 
-    // ✅ STEP 2: Src clear karo
     player.src = 'about:blank';
 
     const fallback = {
@@ -94,7 +83,6 @@ async function updatePlayer() {
         videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
-    // ✅ STEP 3: Thoda wait karo phir src set karo
     await new Promise(r => setTimeout(r, 80));
 
     try {
@@ -106,16 +94,6 @@ async function updatePlayer() {
     } catch {
         player.src = fallback[currentServer] || fallback.vidsrc;
     }
-}
-
-    // 🔑 KEY FIX: sandbox WITHOUT allow-popups
-    // Iframe ke andar se koi bhi new tab nahi khul sakta
-    // allow-same-origin + allow-scripts = video plays
-    // allow-popups MISSING = new tab ads blocked
-    player.setAttribute(
-        'sandbox',
-        'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
-    );
 }
 
 // ==========================================
