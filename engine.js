@@ -1,5 +1,5 @@
 // ==========================================
-// 🎬 INDIPLEX ENGINE - SURGICAL v2.5
+// 🎬 INDIPLEX ENGINE - DIRECT INJECTION v3.0
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -130,40 +130,32 @@ async function loadEpisodes(seasonNum) {
 }
 
 // ==========================================
-// 🚀 PLAYER - SURGICAL UPDATE
+// 🚀 PLAYER - DIRECT INJECTION UPDATE
 // ==========================================
-async function updatePlayer() {
+function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
     player.src = ''; // Clear existing frame
     
-    // Agar server Vidsrc hai, toh "Surgical Strike" karo
-    if (currentServer === 'vidsrc') {
-        try {
-            // API se stream info nikalna
-            const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
-            const data = await res.json();
-            
-            if (data.success) {
-                // Hamare Clean Player (player.html) par bhejo
-                player.src = `player.html?source=${encodeURIComponent(data.embedUrl)}`;
-                return;
-            }
-        } catch (err) {
-            console.warn("Extraction failed, falling back to direct embed.");
-        }
-    }
-
-    // Fallback logic - Agar extraction fail ho ya server doosra ho
+    // Direct Server Links - Iframe Friendly (No middleman required)
     const urls = {
-        vidsrc: `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        // vidsrc.me is heavily iframe-friendly and stable
+        vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`, 
+        
+        // Vidlink directly without extra layers
         vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
+        
+        // Backup Servers
         moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
         videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
-    player.src = urls[currentServer] || urls.vidsrc;
+    // Load URL based on selected server, default is vidsrc.me
+    setTimeout(() => {
+        player.src = urls[currentServer] || urls.vidsrc;
+        player.onload = () => player.focus();
+    }, 100);
 }
 
 function switchServer(s) {
