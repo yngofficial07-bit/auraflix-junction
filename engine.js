@@ -107,11 +107,11 @@ async function loadEpisodes(seasonNum) {
 function updatePlayer() {
     const player = document.getElementById('main-player');
     const urls = {
-        vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`,
-        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
-        videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
-    };
+    vidsrc: `https://vidsrc.xyz/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`,
+    vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
+    moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
+    videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
+};
     
     if (player) {
         player.removeAttribute('sandbox'); // Removed for native interaction
