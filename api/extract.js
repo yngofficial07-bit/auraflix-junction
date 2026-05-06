@@ -4,35 +4,32 @@ export default async function handler(req, res) {
 
     if (!tmdb) return res.status(400).json({ error: "TMDB ID missing" });
 
-    // 🎯 Target: vidsrc.to bypass logic
-    const targetUrl = `https://vidsrc.to/embed/tv/${tmdb}/${s}/${e}`;
+    // 🎯 Target 1: Vidlink (Current favorite for ad-free devs)
+    const vidlinkUrl = `https://vidlink.pro/tv/${tmdb}/${s}/${e}`;
+    
+    // 🎯 Target 2: Vidsrc.me (Older but gold)
+    const vidsrcMeUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdb}&sea=${s}&epi=${e}`;
 
     try {
-        const response = await fetch(targetUrl, {
+        // Hum Vidlink ko as a primary source use karenge kyunki wo 
+        // Vercel se jaldi block nahi hota.
+        const response = await fetch(vidlinkUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://vidsrc.to/',
-                'Accept-Language': 'en-US,en;q=0.9'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Referer': 'https://vidlink.pro/',
             }
         });
 
-        const html = await response.text();
-        
-        // 🧪 Biology Logic: Extracting the "DNA" (Source ID) from HTML
-        const frameIdMatch = html.match(/data-id="(.*?)"/);
-        if (!frameIdMatch) throw new Error("Cell Membrane Breach Failed: ID not found");
-
-        const frameId = frameIdMatch[1];
-        
-        // Note: Real world resolvers use complex decryption here. 
-        // For now, we provide the clean source data back to frontend.
+        // Agar Vidlink load ho gaya, toh hum seedha uske embed ko use karenge
+        // kyunki wo bohot clean hai.
         res.status(200).json({
             success: true,
-            sourceId: frameId,
-            embedUrl: targetUrl
+            provider: "vidlink",
+            embedUrl: vidlinkUrl,
+            fallbackUrl: vidsrcMeUrl
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "Ghost Protocol compromised: " + error.message });
     }
 }
