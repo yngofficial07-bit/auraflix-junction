@@ -1,5 +1,5 @@
 // ==========================================
-// 🎬 INDIPLEX ENGINE - CLEAN v2.0
+// 🎬 INDIPLEX ENGINE - SURGICAL v2.5
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -7,10 +7,9 @@ const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 // ==========================================
-// AD BLOCKER - FILTER INJECTION
+// AD BLOCKER - FILTER INJECTION (Intact)
 // ==========================================
 (function blockAds() {
-    // Known ad domains - inhe block karo
     const AD_DOMAINS = [
         'googlesyndication', 'doubleclick', 'googleadservices',
         'adservice', 'amazon-adsystem', 'ads.', 'ad.', 'adserver',
@@ -19,7 +18,6 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
         'valueimpression', 'revcontent', 'taboola', 'outbrain'
     ];
 
-    // Window.open hijack - popup ads block
     const _open = window.open.bind(window);
     window.open = function(url, ...args) {
         if (!url) return null;
@@ -31,7 +29,6 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
         return _open(url, ...args);
     };
 
-    // DOM Observer - naye ad elements hatao
     const observer = new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
@@ -52,7 +49,7 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 })();
 
 // ==========================================
-// SEASON GENERATOR - DYNAMIC CHIPS
+// SEASON GENERATOR (Intact)
 // ==========================================
 async function initSeasons() {
     const seasonContainer = document.getElementById('season-chips');
@@ -90,7 +87,7 @@ async function initSeasons() {
 }
 
 // ==========================================
-// EPISODE LOADER
+// EPISODE LOADER (Intact)
 // ==========================================
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
@@ -133,31 +130,40 @@ async function loadEpisodes(seasonNum) {
 }
 
 // ==========================================
-// PLAYER - SERVER URLS
+// 🚀 PLAYER - SURGICAL UPDATE
 // ==========================================
-function getPlayerUrl() {
-    const urls = {
-        // Primary - Cleanest
-       vidsrc: `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        // Secondary
-        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
-        // Tertiary
-        moviesapi:`https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
-        // Fallback
-        videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
-    };
-    return urls[currentServer] || urls.vidsrc;
-}
-
-function updatePlayer() {
+async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    player.src = '';
-    setTimeout(() => {
-        player.src = getPlayerUrl();
-        player.onload = () => player.focus();
-    }, 100);
+    player.src = ''; // Clear existing frame
+    
+    // Agar server Vidsrc hai, toh "Surgical Strike" karo
+    if (currentServer === 'vidsrc') {
+        try {
+            // API se stream info nikalna
+            const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                // Hamare Clean Player (player.html) par bhejo
+                player.src = `player.html?source=${encodeURIComponent(data.embedUrl)}`;
+                return;
+            }
+        } catch (err) {
+            console.warn("Extraction failed, falling back to direct embed.");
+        }
+    }
+
+    // Fallback logic - Agar extraction fail ho ya server doosra ho
+    const urls = {
+        vidsrc: `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
+        moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
+        videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
+    };
+
+    player.src = urls[currentServer] || urls.vidsrc;
 }
 
 function switchServer(s) {
