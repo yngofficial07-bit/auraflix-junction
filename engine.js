@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.1
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.2 FINAL
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -27,71 +27,83 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ PHANTOM WINDOW — The Real Ad Killer
+// 🛡️ MAXIMUM AD SHIELD
 // ==========================================
-(function phantomShield() {
-    // Robust fake window — player ko lagega popup khula, ad nahi khulega
+(function maxShield() {
+
+    // 1. Phantom Window — player ko lagta hai popup khula, actually nahi khulta
     window.open = function(url) {
-        console.log('🛡️ Ad popup intercepted:', url);
         return {
             closed: false,
             focus: () => {},
             blur: () => {},
             close: function() { this.closed = true; },
-            location: {
-                href: url || '',
-                assign: () => {},
-                replace: () => {}
-            },
-            document: { write: () => {}, close: () => {} },
-            postMessage: () => {}
+            location: { href: url || '', assign: () => {}, replace: () => {} },
+            document: { write: () => {}, close: () => {}, open: () => {} },
+            postMessage: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {}
         };
     };
 
-    // DOM observer — player ke bahar inject hone wale ad elements delete karo
-    const observer = new MutationObserver(() => {
-        document.querySelectorAll(
-            'div[class*="overlay"], div[id*="pop"], iframe[id*="ad"], div[class*="ad-layer"]'
-        ).forEach(el => {
-            if (el.id !== 'main-player') el.remove();
+    // 2. DOM Observer — bahar inject hone wale ad elements instant delete
+    new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+                if (node.nodeType !== 1) return;
+                const tag = node.tagName?.toLowerCase();
+                const cls = (node.className || '') + (node.id || '');
+                const src = node.src || node.href || '';
+                const adPatterns = /pop|overlay|ad-|ads-|banner|promo|sponsor/i;
+
+                if (
+                    (tag === 'iframe' && node.id !== 'main-player') ||
+                    (tag === 'div' && adPatterns.test(cls) && node.id !== 'main-player') ||
+                    (tag === 'a' && /bet|casino|18\+|adult/i.test(src))
+                ) {
+                    node.remove();
+                }
+            });
         });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    // 3. Periodic cleanup — koi ad element bacha ho toh usse bhi hatao
+    setInterval(() => {
+        document.querySelectorAll(
+            'iframe:not(#main-player), div[class*="pop-"], div[id*="pop-"], ' +
+            'div[class*="overlay-ad"], div[class*="ad-overlay"]'
+        ).forEach(el => el.remove());
+    }, 1000);
+
 })();
 
 // ==========================================
-// 🚀 PLAYER CORE (No Sandbox)
+// 🚀 PLAYER CORE — NO SANDBOX
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    // Sandbox bilkul nahi — ye video break karta hai
     player.removeAttribute('sandbox');
     player.src = '';
 
-    const fallbackUrls = {
-        vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff`,
+    const fallback = {
+        vidsrc:   `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
+        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff`,
         vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
+        videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
     try {
-        const response = await fetch(
-            `/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`
-        );
-        const data = await response.json();
-
+        const res  = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
+        const data = await res.json();
         if (data.success && data.embedUrl) {
             player.src = data.embedUrl;
-            console.log('✅ Stream loaded:', data.embedUrl);
         } else {
-            throw new Error('API no data');
+            throw new Error();
         }
-    } catch (err) {
-        console.warn('⚠️ API fallback:', currentServer);
-        player.src = fallbackUrls[currentServer] || fallbackUrls.vidsrc;
+    } catch {
+        player.src = fallback[currentServer] || fallback.vidsrc;
     }
 }
 
@@ -102,16 +114,14 @@ async function initSeasons() {
     const container = document.getElementById('season-chips');
     if (!container) return;
     try {
-        const res = await fetch(
-            `https://api.themoviedb.org/3/tv/${TMDB_ID}?api_key=${API_KEY}`
-        );
+        const res  = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}?api_key=${API_KEY}`);
         const data = await res.json();
         container.innerHTML = data.seasons
             .filter(s => s.season_number !== 0)
             .map(s =>
                 `<div class="chip ${s.season_number === currentS ? 'active' : ''}"
                       onclick="window.changeSeason(${s.season_number})">
-                    Season ${s.season_number}
+                     Season ${s.season_number}
                  </div>`
             ).join('');
         loadEpisodes(currentS);
@@ -129,9 +139,7 @@ window.changeSeason = (num) => {
 
 async function loadEpisodes(num) {
     try {
-        const res = await fetch(
-            `https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${num}?api_key=${API_KEY}`
-        );
+        const res  = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${num}?api_key=${API_KEY}`);
         const data = await res.json();
         const grid = document.getElementById('episode-grid');
         if (!grid) return;
@@ -142,9 +150,7 @@ async function loadEpisodes(num) {
             <div class="episode-card" onclick="window.playEpisode(${epi.episode_number})">
                 <div class="card-inner">
                     <div class="glow-layer"></div>
-                    ${epi.episode_number === currentE
-                        ? '<div class="playing-tag">PLAYING</div>'
-                        : ''}
+                    ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
                     <img class="epi-thumb"
                          src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}"
                          loading="lazy"
@@ -169,9 +175,8 @@ window.playEpisode = (num) => {
 
 function switchServer(s) {
     currentServer = s;
-    document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
-    const btn = document.querySelector(`.server-btn[data-server="${s}"]`);
-    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.server-btn[data-server="${s}"]`)?.classList.add('active');
     updatePlayer();
 }
 
