@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
 
@@ -10,30 +9,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Step 1: vidsrc.to se embed page fetch karo
-        const embedUrl = `https://vidsrc.to/embed/tv/${tmdb}/${season}/${episode}`;
+        // vidsrc.to API endpoints
+        const episodeUrl = `https://vidsrc.to/ajax/episode/info?tmdbId=${tmdb}&type=tv&season=${season}&episode=${episode}`;
         
-        const embedRes = await fetch(embedUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://vidsrc.to/',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            }
-        });
-
-        const html = await embedRes.text();
-
-        // Step 2: Source ID extract karo
-        const srcIdMatch = html.match(/data-src="([^"]+)"/);
-        if (!srcIdMatch) {
-            return res.status(404).json({ error: 'Source not found' });
-        }
-
-        const srcId = srcIdMatch[1];
-
-        // Step 3: Actual source URL fetch karo
-        const sourceUrl = `https://vidsrc.to/ajax/embed/episode/${srcId}/sources`;
-        const sourceRes = await fetch(sourceUrl, {
+        const episodeRes = await fetch(episodeUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'Referer': 'https://vidsrc.to/',
@@ -41,39 +20,35 @@ export default async function handler(req, res) {
             }
         });
 
-        const sourceData = await sourceRes.json();
+        const episodeData = await episodeRes.json();
 
-        if (!sourceData.result || sourceData.result.length === 0) {
+        if (!episodeData.result) {
+            return res.status(404).json({ error: 'Episode not found' });
+        }
+
+        const episodeId = episodeData.result.id;
+        const sourcesUrl = `https://vidsrc.to/ajax/episode/sources/${episodeId}`;
+        
+        const sourcesRes = await fetch(sourcesUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0',
+                'Referer': 'https://vidsrc.to/',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const sourcesData = await sourcesRes.json();
+
+        if (!sourcesData.result || sourcesData.result.length === 0) {
             return res.status(404).json({ error: 'No sources found' });
         }
 
-        // Step 4: Pehla source lo
-        const firstSource = sourceData.result[0];
-        const playerUrl = `https://vidsrc.to/ajax/embed/source/${firstSource.id}`;
-
-        const playerRes = await fetch(playerUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Referer': 'https://vidsrc.to/',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-
-        const playerData = await playerRes.json();
-
-        if (!playerData.result || !playerData.result.url) {
-            return res.status(404).json({ error: 'Player URL not found' });
-        }
-
-        // Step 5: m3u8 URL return karo
         return res.status(200).json({
             success: true,
-            streamUrl: playerData.result.url,
-            type: 'hls'
+            sources: sourcesData.result
         });
 
     } catch (error) {
-        console.error('Stream fetch error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: error.message });
     }
 }
