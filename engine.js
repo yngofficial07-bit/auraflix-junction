@@ -141,7 +141,7 @@ function updatePlayer() {
     // Direct Server Links - Iframe Friendly (No middleman required)
     const urls = {
         // vidsrc.me is heavily iframe-friendly and stable
-        vidsrc: `https://vidsrc.cc/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`, 
+        vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`, 
         
         // Vidlink directly without extra layers
         vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
