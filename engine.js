@@ -1,134 +1,179 @@
 // ==========================================
-// 🧠 THE GHOST-TOUCH PROTOCOL: AD-LAYER BYPASS
-// ==========================================
-
-(function() {
-    console.log("⚡ INDIPLEX: Ghost-Touch Protocol Active.");
-
-    // 1. THE AD-FEEDER (Seducing the Player)
-    // Hum window.open ko hijack karke player ko wo "Stimulus" denge jo use chahiye
-    const ghostWindow = {
-        closed: false,
-        focus: () => {},
-        close: function() { this.closed = true; },
-        location: { href: "" }
-    };
-
-    window.open = function(url) {
-        console.log("🛡️ Ghost-Touch: Intercepted ad-request. Feeding fake success.");
-        // Player ko lagega ad khul gaya, isliye wo play-lock hata dega
-        return ghostWindow; 
-    };
-
-    // 2. THE CLICK TUNNEL (The "Billion IQ" Part)
-    // Hum player ke upar ek invisible "Shield" rakhenge
-    const setupShield = () => {
-        const playerContainer = document.querySelector('.player-container'); // Tera container class
-        if (!playerContainer || document.getElementById('click-shield')) return;
-
-        const shield = document.createElement('div');
-        shield.id = 'click-shield';
-        shield.style = `
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 2147483647; cursor: pointer; background: transparent;
-        `;
-
-        // Jab user is shield par click karega...
-        shield.onclick = function(e) {
-            console.log("🎯 Shield: Tunneling click to player core...");
-            
-            // Step A: Fake the popup signal
-            window.open("about:blank");
-
-            // Step B: Temporarily disable the shield to let the real click hit the video
-            shield.style.pointerEvents = 'none';
-            
-            // Step C: Automatically bring the shield back after 500ms to block the next ad
-            setTimeout(() => {
-                shield.style.pointerEvents = 'auto';
-            }, 500);
-        };
-
-        playerContainer.appendChild(shield);
-    };
-
-    setInterval(setupShield, 1000);
-
-    // 3. AGGRESSIVE SCRIPT PURGE
-    const nukeAds = () => {
-        const badSelectors = ['iframe[src*="ads"]', 'div[class*="ad-"]', 'div[id*="ad-"]', '.pop-under', '.overlay-ads'];
-        badSelectors.forEach(s => {
-            document.querySelectorAll(s).forEach(el => el.remove());
-        });
-    };
-    setInterval(nukeAds, 500);
-})();
-
-// ==========================================
-// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (NO SKIPS)
+// 🎬 INDIPLEX ENGINE - CLEAN v2.0
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732'; 
+const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
+// ==========================================
+// AD BLOCKER - FILTER INJECTION
+// ==========================================
+(function blockAds() {
+    // Known ad domains - inhe block karo
+    const AD_DOMAINS = [
+        'googlesyndication', 'doubleclick', 'googleadservices',
+        'adservice', 'amazon-adsystem', 'ads.', 'ad.', 'adserver',
+        'popads', 'popcash', 'trafficjunky', 'exoclick', 'juicyads',
+        'adsterra', 'propellerads', 'hilltopads', 'adcash',
+        'valueimpression', 'revcontent', 'taboola', 'outbrain'
+    ];
+
+    // Window.open hijack - popup ads block
+    const _open = window.open.bind(window);
+    window.open = function(url, ...args) {
+        if (!url) return null;
+        const isAd = AD_DOMAINS.some(d => url.includes(d));
+        if (isAd) {
+            console.log('🛡️ Ad blocked:', url);
+            return { closed: false, focus: ()=>{}, close: ()=>{}, location: { href: '' } };
+        }
+        return _open(url, ...args);
+    };
+
+    // DOM Observer - naye ad elements hatao
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+                if (node.nodeType !== 1) return;
+                const src = node.src || node.href || '';
+                const isAdNode = AD_DOMAINS.some(d => src.includes(d));
+                const isAdClass = ['pop-under','overlay-ad','ad-container','ad-overlay']
+                    .some(c => node.className && node.className.includes(c));
+                if (isAdNode || isAdClass) {
+                    node.remove();
+                    console.log('🛡️ Ad element removed');
+                }
+            });
+        });
+    });
+
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+})();
+
+// ==========================================
+// SEASON GENERATOR - DYNAMIC CHIPS
+// ==========================================
+async function initSeasons() {
+    const seasonContainer = document.getElementById('season-chips');
+    if (!seasonContainer) return;
+
+    try {
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}?api_key=${API_KEY}`);
+        const data = await response.json();
+
+        seasonContainer.innerHTML = '';
+
+        data.seasons.forEach(season => {
+            if (season.season_number === 0) return;
+
+            const chip = document.createElement('div');
+            chip.className = `chip ${season.season_number === currentS ? 'active' : ''}`;
+            chip.innerText = `Season ${season.season_number}`;
+
+            chip.onclick = () => {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentS = season.season_number;
+                currentE = 1;
+                loadEpisodes(currentS);
+            };
+
+            seasonContainer.appendChild(chip);
+        });
+
+        loadEpisodes(currentS);
+
+    } catch (error) {
+        console.error('Season Engine Error:', error);
+    }
+}
+
+// ==========================================
+// EPISODE LOADER
+// ==========================================
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
         const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${seasonNum}?api_key=${API_KEY}`);
         const data = await res.json();
         const grid = document.getElementById('episode-grid');
-        if(!grid) return;
-        
-        grid.innerHTML = ''; 
+        const countEl = document.getElementById('episode-count');
+        if (!grid) return;
+
+        if (countEl) countEl.textContent = `${data.episodes.length} episodes`;
+
+        grid.innerHTML = '';
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 "Ek Number" Swag: 3D Tilt & RGB Glow strictly intact
-            card.className = 'episode-card tilt-effect rgb-glow'; 
-            
+            card.className = 'episode-card';
+
+            const thumb = epi.still_path
+                ? `https://image.tmdb.org/t/p/w500${epi.still_path}`
+                : 'https://via.placeholder.com/500x281?text=No+Preview';
+
             card.innerHTML = `
-                ${(epi.episode_number === currentE) ? '<div class="playing-tag">PLAYING</div>' : ''}
-                <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path}">
+                ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
+                <img class="epi-thumb" src="${thumb}" loading="lazy">
                 <div class="epi-info">
                     <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
+                    <div class="epi-meta">${epi.runtime ? epi.runtime + ' min' : ''} ${epi.vote_average ? '⭐ ' + epi.vote_average.toFixed(1) : ''}</div>
                 </div>`;
-            
-            card.onclick = (e) => {
-                e.preventDefault();
+
+            card.onclick = () => {
                 currentE = epi.episode_number;
                 updatePlayer();
                 loadEpisodes(currentS);
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 Neural Error"); }
+    } catch (e) {
+        console.error('Episode Load Error:', e);
+    }
+}
+
+// ==========================================
+// PLAYER - SERVER URLS
+// ==========================================
+function getPlayerUrl() {
+    const urls = {
+        // Primary - Cleanest
+        vidsrc:   `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        // Secondary
+        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
+        // Tertiary
+        moviesapi:`https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
+        // Fallback
+        videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
+    };
+    return urls[currentServer] || urls.vidsrc;
 }
 
 function updatePlayer() {
     const player = document.getElementById('main-player');
-    const urls = {
-    vidsrc: `https://vidsrc.xyz/embed/tv?tmdb=${TMDB_ID}&season=${currentS}&episode=${currentE}`,
-    vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
-    moviesapi: `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
-    videasy: `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
-};
-    
-    if (player) {
-        player.removeAttribute('sandbox'); // Removed for native interaction
-        player.src = urls[currentServer];
-        player.onload = () => { player.focus(); };
-    }
+    if (!player) return;
+
+    player.src = '';
+    setTimeout(() => {
+        player.src = getPlayerUrl();
+        player.onload = () => player.focus();
+    }, 100);
 }
 
-function switchServer(s) { 
-    currentServer = s; 
+function switchServer(s) {
+    currentServer = s;
     document.querySelectorAll('.server-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(s));
+        btn.classList.remove('active');
     });
-    updatePlayer(); 
+    const activeBtn = document.querySelector(`.server-btn[data-server="${s}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    updatePlayer();
 }
 
+// ==========================================
+// INIT
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    loadEpisodes(1);
+    initSeasons();
     updatePlayer();
 });
