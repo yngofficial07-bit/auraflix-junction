@@ -77,7 +77,15 @@ async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    player.src = '';
+    // ✅ STEP 1: Pehle sandbox set karo (src se PEHLE)
+    // allow-popups NAHI hai = iframe se koi bhi new tab nahi khulega
+    player.setAttribute(
+        'sandbox',
+        'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
+    );
+
+    // ✅ STEP 2: Src clear karo
+    player.src = 'about:blank';
 
     const fallback = {
         vidsrc:   `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
@@ -86,13 +94,19 @@ async function updatePlayer() {
         videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
+    // ✅ STEP 3: Thoda wait karo phir src set karo
+    await new Promise(r => setTimeout(r, 80));
+
     try {
         const res  = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await res.json();
-        player.src = (data.success && data.embedUrl) ? data.embedUrl : fallback[currentServer];
+        player.src = (data.success && data.embedUrl)
+            ? data.embedUrl
+            : fallback[currentServer] || fallback.vidsrc;
     } catch {
         player.src = fallback[currentServer] || fallback.vidsrc;
     }
+}
 
     // 🔑 KEY FIX: sandbox WITHOUT allow-popups
     // Iframe ke andar se koi bhi new tab nahi khul sakta
