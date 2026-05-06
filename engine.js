@@ -1,67 +1,62 @@
 // ==========================================
-// 🧠 THE NEURAL BYPASS: ZERO FRICTION
+// 🛡️ THE BIOS OVERRIDE: CLICK TUNNELING
 // ==========================================
 
 (function() {
-    console.log("⚡ INDIPLEX: Neural Bypass Engaged. Clearing the Synaptic Cleft...");
+    console.log("⚡ INDIPLEX: BIOS Override Active. Forcing Action Potential...");
 
-    // 1. THE STEALTH OPENER
-    // Player ko lagega usne popup khola, par hum use "Invisible" kar denge
-    const originalOpen = window.open;
-    window.open = function(url, target, features) {
-        console.log("🛡️ Intercepted Ad-Click to:", url);
-        // Hum ek dummy object return karenge taaki player crash na ho
-        return { 
-            closed: false, 
-            focus: () => {}, 
-            close: () => { this.closed = true; },
-            location: { href: url }
-        };
+    // 1. THE AD-SIMULATOR (Billion IQ Move)
+    // Player ko lagega ki ad chal gaya, isliye wo video unlock kar dega
+    const ghostWindow = {
+        closed: false,
+        focus: function() {},
+        close: function() { this.closed = true; },
+        location: { href: "" }
     };
 
-    // 2. SURGICAL LAYER NUKER (Mutation Observer)
-    // Ye 'setInterval' se 10x fast aur "Smart" hai
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) { // Check if it's an Element
-                    const style = window.getComputedStyle(node);
-                    const isFixed = style.position === 'fixed' || style.position === 'absolute';
-                    
-                    // Agar koi div player ke upar 'Fixed' hokar baitha hai, toh wo Virus hai
-                    if (isFixed && node.id !== 'main-player' && !node.closest('#episode-grid')) {
-                        node.style.setProperty('display', 'none', 'important');
-                        node.style.setProperty('pointer-events', 'none', 'important');
-                        node.remove(); 
-                    }
+    window.open = function() {
+        console.log("🛡️ Override: Feeding fake click-success to player.");
+        return ghostWindow; 
+    };
+
+    // 2. POINTER EVENT RECOVERY (High Frequency)
+    // Har 50ms mein player ki clickable state ko "Reset" karega
+    const forceInteraction = () => {
+        const player = document.getElementById('main-player');
+        if (!player) return;
+
+        // Forcefully enable interaction on the iframe itself
+        player.style.setProperty('pointer-events', 'auto', 'important');
+        player.style.setProperty('user-select', 'none', 'important');
+        player.setAttribute('tabindex', '0'); // For keyboard focus
+
+        // Nuke any div that tries to sit on top of the player
+        const bodyChildren = document.body.children;
+        for (let i = 0; i < bodyChildren.length; i++) {
+            const el = bodyChildren[i];
+            if (el.id !== 'app' && el.id !== 'main-player' && !el.closest('#episode-grid')) {
+                const z = window.getComputedStyle(el).zIndex;
+                if (parseInt(z) > 5 || el.style.position === 'fixed') {
+                    el.style.display = 'none';
+                    el.style.pointerEvents = 'none';
                 }
-            });
-        });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // 3. POINTER-EVENT TUNNEL
-    // Forcefully ensure player is clickable
-    const fixPlayer = () => {
-        const p = document.getElementById('main-player');
-        if(p) {
-            p.style.pointerEvents = 'auto';
-            p.style.zIndex = '10';
+            }
         }
     };
-    setInterval(fixPlayer, 500);
+
+    // Surgical speed (Physics style: High Frequency = Low Friction)
+    setInterval(forceInteraction, 50);
+
 })();
 
 // ==========================================
-// 🎬 INDIPLEX CORE: ALL FEATURES INTACT
+// 🎬 INDIPLEX CORE: THE ABYSSAL VOID (100% FEATURES)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732'; 
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
-// Never skip animations or code elements
 async function loadEpisodes(seasonNum) {
     currentS = seasonNum;
     try {
@@ -73,7 +68,7 @@ async function loadEpisodes(seasonNum) {
         grid.innerHTML = ''; 
         data.episodes.forEach(epi => {
             const card = document.createElement('div');
-            // 💎 "Ek Number" Effects: 3D Hover/RGB strictly kept
+            // 💎 EK NUMBER: 3D Tilt & RGB Glow are NEVER removed
             card.className = 'episode-card tilt-effect rgb-glow'; 
             
             card.innerHTML = `
@@ -91,7 +86,7 @@ async function loadEpisodes(seasonNum) {
             };
             grid.appendChild(card);
         });
-    } catch (e) { console.error("🚨 Neural Link Error"); }
+    } catch (e) { console.error("🚨 BIOS: Interface Error"); }
 }
 
 function updatePlayer() {
@@ -104,11 +99,13 @@ function updatePlayer() {
     };
     
     if (player) {
+        // Clear sandbox but keep essential permissions
+        player.removeAttribute('sandbox'); 
         player.src = urls[currentServer];
-        // Ensure player is ready for interaction
-        player.onload = () => { 
-            player.focus(); 
-            console.log("🎬 Video Stream Ready.");
+        
+        player.onload = () => {
+            console.log("🎬 Stream Unlocked.");
+            player.focus();
         };
     }
 }
