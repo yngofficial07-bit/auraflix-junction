@@ -138,7 +138,7 @@ async function loadEpisodes(seasonNum) {
 function getPlayerUrl() {
     const urls = {
         // Primary - Cleanest
-        vidsrc:   `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+       vidsrc: `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
         // Secondary
         vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff&autoplay=true`,
         // Tertiary
