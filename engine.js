@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.2 FINAL
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.3 FINAL
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -27,64 +27,56 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ MAXIMUM AD SHIELD
+// 🛡️ PARENT-LEVEL PHANTOM WINDOW
+// Ye tab kaam aata hai jab iframe parent.window.open() call kare
 // ==========================================
-(function maxShield() {
-
-    // 1. Phantom Window — player ko lagta hai popup khula, actually nahi khulta
+(function phantomShield() {
     window.open = function(url) {
+        console.log('🛡️ Popup blocked at parent level:', url);
+        // Fake success object — player sochta hai popup khul gaya → video plays
         return {
             closed: false,
-            focus: () => {},
-            blur: () => {},
-            close: function() { this.closed = true; },
-            location: { href: url || '', assign: () => {}, replace: () => {} },
+            focus:  () => {},
+            blur:   () => {},
+            close:  function() { this.closed = true; },
+            location: {
+                href: url || '',
+                assign:  () => {},
+                replace: () => {}
+            },
             document: { write: () => {}, close: () => {}, open: () => {} },
-            postMessage: () => {},
-            addEventListener: () => {},
+            postMessage:       () => {},
+            addEventListener:  () => {},
             removeEventListener: () => {}
         };
     };
 
-    // 2. DOM Observer — bahar inject hone wale ad elements instant delete
+    // Bahar inject hone wale overlay/ad elements delete karo
     new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
                 if (node.nodeType !== 1) return;
                 const tag = node.tagName?.toLowerCase();
                 const cls = (node.className || '') + (node.id || '');
-                const src = node.src || node.href || '';
-                const adPatterns = /pop|overlay|ad-|ads-|banner|promo|sponsor/i;
-
                 if (
                     (tag === 'iframe' && node.id !== 'main-player') ||
-                    (tag === 'div' && adPatterns.test(cls) && node.id !== 'main-player') ||
-                    (tag === 'a' && /bet|casino|18\+|adult/i.test(src))
+                    (tag === 'div' && /pop|overlay-ad|ad-layer/i.test(cls))
                 ) {
                     node.remove();
                 }
             });
         });
     }).observe(document.documentElement, { childList: true, subtree: true });
-
-    // 3. Periodic cleanup — koi ad element bacha ho toh usse bhi hatao
-    setInterval(() => {
-        document.querySelectorAll(
-            'iframe:not(#main-player), div[class*="pop-"], div[id*="pop-"], ' +
-            'div[class*="overlay-ad"], div[class*="ad-overlay"]'
-        ).forEach(el => el.remove());
-    }, 1000);
-
 })();
 
 // ==========================================
-// 🚀 PLAYER CORE — NO SANDBOX
+// 🚀 PLAYER CORE
+// Sandbox: scripts allow, popups BLOCK
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    player.removeAttribute('sandbox');
     player.src = '';
 
     const fallback = {
@@ -97,14 +89,19 @@ async function updatePlayer() {
     try {
         const res  = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await res.json();
-        if (data.success && data.embedUrl) {
-            player.src = data.embedUrl;
-        } else {
-            throw new Error();
-        }
+        player.src = (data.success && data.embedUrl) ? data.embedUrl : fallback[currentServer];
     } catch {
         player.src = fallback[currentServer] || fallback.vidsrc;
     }
+
+    // 🔑 KEY FIX: sandbox WITHOUT allow-popups
+    // Iframe ke andar se koi bhi new tab nahi khul sakta
+    // allow-same-origin + allow-scripts = video plays
+    // allow-popups MISSING = new tab ads blocked
+    player.setAttribute(
+        'sandbox',
+        'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
+    );
 }
 
 // ==========================================
@@ -150,7 +147,8 @@ async function loadEpisodes(num) {
             <div class="episode-card" onclick="window.playEpisode(${epi.episode_number})">
                 <div class="card-inner">
                     <div class="glow-layer"></div>
-                    ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
+                    ${epi.episode_number === currentE
+                        ? '<div class="playing-tag">PLAYING</div>' : ''}
                     <img class="epi-thumb"
                          src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}"
                          loading="lazy"
