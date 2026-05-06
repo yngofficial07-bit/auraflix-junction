@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v4.1 (FIXED)
+// 🌌 INDIPLEX - THE ABYSSAL VOID v4.2
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -7,9 +7,10 @@ const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 // ==========================================
-// ✨ VISUALS: Intro & 3D RGB (NEVER REMOVED)
+// ✨ CORE VISUALS: Intro & 3D RGB (INTACT)
 // ==========================================
 function initVisuals() {
+    // 🎬 Original Intro (2.5s Stay)
     const intro = document.getElementById('intro-overlay');
     if(intro) {
         setTimeout(() => {
@@ -17,61 +18,66 @@ function initVisuals() {
             setTimeout(() => intro.remove(), 1000);
         }, 2500);
     }
-    // 3D Hover & RGB Logic
+
+    // 🌈 3D Hover & RGB Animation Logic
     document.addEventListener('mousemove', (e) => {
-        document.querySelectorAll('.episode-card, .server-btn').forEach(card => {
+        const cards = document.querySelectorAll('.episode-card, .server-btn, .chip');
+        cards.forEach(card => {
             const rect = card.getBoundingClientRect();
-            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
         });
     });
 }
 
 // ==========================================
-// 🚀 PLAYER CORE: The "Black Screen" Killer
+// 🛰️ GHOST PROTOCOL: Stream Snatching
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
 
-    // Reset player state to avoid ghosting
-    player.src = '';
-    
-    // Default URLs logic
+    player.src = ''; 
     const urls = {
         vidsrc: `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        vidlink: `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff`,
         vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
     };
 
     try {
-        console.log("🛰️ Fetching from Ghost Protocol API...");
         const response = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await response.json();
 
         if (data.success && data.embedUrl) {
-            console.log("🔥 Ghost Link Secured!");
-            // Agar m3u8 mil raha hai toh player.html use karo, varna direct embed
             if (data.embedUrl.includes('.m3u8')) {
                 player.src = `player.html?source=${encodeURIComponent(data.embedUrl)}`;
             } else {
                 player.src = data.embedUrl;
             }
-        } else {
-            throw new Error("API Offline");
-        }
+        } else { throw new Error(); }
     } catch (err) {
-        console.warn("⚠️ API Error, using direct fallback.");
-        // Fallback to standard servers if API fails
+        // Safe Fallback to standard servers
         player.src = urls[currentServer] || urls.vidsrc;
     }
 
-    // Sandbox permissions update to allow video play
+    // 🛡️ Anti-Ad Sandbox
     player.setAttribute('sandbox', 'allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation');
 }
 
 // ==========================================
-// 📺 UI & SEASONS (Ek Number Setup)
+// 🛡️ SECURITY LAYER: Popup Hijack
+// ==========================================
+(function injectShield() {
+    window.open = function() { return { closed: true, focus: ()=>{}, close: ()=>{} }; };
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'IFRAME') e.stopPropagation();
+    }, true);
+})();
+
+// ==========================================
+// 📺 UI ENGINE: Seasons & Episodes
 // ==========================================
 async function initSeasons() {
     const container = document.getElementById('season-chips');
@@ -84,7 +90,7 @@ async function initSeasons() {
             .map(s => `<div class="chip ${s.season_number === currentS ? 'active' : ''}" onclick="window.changeSeason(${s.season_number})">Season ${s.season_number}</div>`)
             .join('');
         loadEpisodes(currentS);
-    } catch (err) { console.error("Season Engine Failed", err); }
+    } catch (err) { console.error(err); }
 }
 
 window.changeSeason = (num) => {
@@ -102,13 +108,14 @@ async function loadEpisodes(num) {
         grid.innerHTML = data.episodes.map(epi => `
             <div class="episode-card" onclick="window.playEpisode(${epi.episode_number})">
                 <div class="card-inner">
-                    <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}" onerror="this.src='https://via.placeholder.com/500x281?text=No+Image'">
+                    <div class="glow-layer"></div>
+                    <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}" loading="lazy">
                     <div class="epi-info">
                         <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
                     </div>
                 </div>
             </div>`).join('');
-    } catch (err) { console.error("Episode Engine Failed", err); }
+    } catch (err) { console.error(err); }
 }
 
 window.playEpisode = (num) => {
@@ -117,8 +124,16 @@ window.playEpisode = (num) => {
     loadEpisodes(currentS);
 };
 
+function switchServer(s) {
+    currentServer = s;
+    document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`.server-btn[data-server="${s}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    updatePlayer();
+}
+
 // ==========================================
-// 🛡️ INITIALIZE EVERYTHING
+// 🔥 BOOT SYSTEM
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initVisuals();
