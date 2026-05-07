@@ -7,106 +7,79 @@ export default async function handler(req, res) {
     if (!tmdb) return res.status(400).json({ error: "Missing params" });
 
     const embedUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdb}&sea=${s}&epi=${e}`;
+    const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://vidsrc.me/',
+        'Cache-Control': 'no-cache'
+    };
 
     try {
-        const pageRes = await fetch(embedUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': 'https://vidsrc.me/',
-                'Cache-Control': 'no-cache'
-            }
-        });
-
+        // Step 1: Main page fetch
+        const pageRes = await fetch(embedUrl, { headers });
         const html = await pageRes.text();
 
-        // Log full HTML so we can see structure
-        console.log('=== FULL HTML START ===');
-        console.log(html);
-        console.log('=== FULL HTML END ===');
-
         if (html.includes('Just a moment') || html.includes('Checking your browser')) {
-            return res.status(200).json({ success: true, embedUrl, type: 'cloudflare-blocked' });
+            return res.status(200).json({ success: true, embedUrl, type: 'cf-blocked' });
         }
 
-        // Try ALL possible patterns
-        const patterns = [
-            /data-id="([^"]+)"/,
-            /data-hash="([^"]+)"/,
-            /data-source="([^"]+)"/,
-            /data-ep="([^"]+)"/,
-            /"episode_id"\s*:\s*"([^"]+)"/,
-            /episodeId\s*=\s*['"]([^'"]+)['"]/,
-            /embed\/source\/([a-zA-Z0-9]+)/,
-            /sources\/([a-zA-Z0-9]+)/
+        // Step 2: data-iframe extract karo (ye hai actual player URL)
+        const dataIframeMatch = html.match(/data-iframe="([^"]+)"/);
+        if (!dataIframeMatch) {
+            console.log('No data-iframe found');
+            return res.status(200).json({ success: true, embedUrl, type: 'no-iframe' });
+        }
+
+        const playerPath = dataIframeMatch[1];
+        const playerUrl = `https://vidsrc.me${playerPath}`;
+        console.log('Player URL:', playerUrl);
+
+        // Step 3: Actual player page fetch karo
+        const playerRes = await fetch(playerUrl, {
+            headers: {
+                ...headers,
+                'Referer': 'https://vidsrc.me/'
+            }
+        });
+        const playerHtml = await playerRes.text();
+        console.log('Player HTML (first 1000):', playerHtml.substring(0, 1000));
+
+        // Step 4: Stream URL patterns try karo
+        const streamPatterns = [
+            /file\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
+            /src\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
+            /source\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
+            /"url"\s*:\s*"([^"]+\.m3u8[^"]*)"/i,
+            /https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/i
         ];
 
-        let foundId = null;
-        let foundPattern = null;
-        for (const pattern of patterns) {
-            const match = html.match(pattern);
+        let streamUrl = null;
+        for (const pattern of streamPatterns) {
+            const match = playerHtml.match(pattern);
             if (match) {
-                foundId = match[1];
-                foundPattern = pattern.toString();
-                console.log('Pattern matched:', foundPattern, '→', foundId);
+                streamUrl = match[1] || match[0];
+                console.log('Stream found:', streamUrl);
                 break;
             }
         }
 
-        if (!foundId) {
-            // Return a snippet of HTML so we can see structure
-            const snippet = html.replace(/<script[\s\S]*?<\/script>/gi, '[SCRIPT]')
-                                .replace(/<style[\s\S]*?<\/style>/gi, '[STYLE]')
-                                .substring(0, 2000);
-            console.log('No pattern matched. HTML snippet:', snippet);
-            return res.status(200).json({ 
-                success: true, 
-                embedUrl, 
-                type: 'no-id',
-                htmlSnippet: snippet
+        if (streamUrl) {
+            return res.status(200).json({
+                success: true,
+                embedUrl: streamUrl,
+                type: 'stream'
             });
         }
 
-        const sourcesRes = await fetch(
-            `https://vidsrc.me/ajax/embed/episode/${foundId}/sources`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Referer': 'https://vidsrc.me/',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }
-        );
-
-        const sourcesData = await sourcesRes.json();
-        console.log('Sources response:', JSON.stringify(sourcesData));
-
-        if (!sourcesData.result || sourcesData.result.length === 0) {
-            return res.status(200).json({ success: true, embedUrl, type: 'no-sources' });
-        }
-
-        const firstSource = sourcesData.result[0];
-        const sourceRes = await fetch(
-            `https://vidsrc.me/ajax/embed/source/${firstSource.id}`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Referer': 'https://vidsrc.me/',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }
-        );
-
-        const sourceData = await sourceRes.json();
-        console.log('Source data:', JSON.stringify(sourceData));
-
-        const streamUrl = sourceData.result?.url;
-        if (streamUrl) {
-            return res.status(200).json({ success: true, embedUrl: streamUrl, type: 'stream' });
-        }
-
-        return res.status(200).json({ success: true, embedUrl, type: 'no-stream-url' });
+        // Step 5: Agar m3u8 nahi mila, player URL hi return karo
+        console.log('No stream in player HTML, returning player URL');
+        return res.status(200).json({
+            success: true,
+            embedUrl: playerUrl,
+            playerHtmlSnippet: playerHtml.substring(0, 500),
+            type: 'player-url'
+        });
 
     } catch (err) {
         console.log('Error:', err.message);
