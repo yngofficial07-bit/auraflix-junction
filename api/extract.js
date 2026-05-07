@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     };
 
     try {
-        // Step 1: Main page fetch
+        // Step 1: Main page
         const pageRes = await fetch(embedUrl, { headers });
         const html = await pageRes.text();
 
@@ -24,65 +24,28 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, embedUrl, type: 'cf-blocked' });
         }
 
-        // Step 2: data-iframe extract karo (ye hai actual player URL)
         const dataIframeMatch = html.match(/data-iframe="([^"]+)"/);
         if (!dataIframeMatch) {
-            console.log('No data-iframe found');
             return res.status(200).json({ success: true, embedUrl, type: 'no-iframe' });
         }
 
-        const playerPath = dataIframeMatch[1];
-        const playerUrl = `https://vidsrc.me${playerPath}`;
-        console.log('Player URL:', playerUrl);
+        const playerUrl = `https://vidsrc.me${dataIframeMatch[1]}`;
 
-        // Step 3: Actual player page fetch karo
+        // Step 2: Player page
         const playerRes = await fetch(playerUrl, {
-            headers: {
-                ...headers,
-                'Referer': 'https://vidsrc.me/'
-            }
+            headers: { ...headers, 'Referer': 'https://vidsrc.me/' }
         });
         const playerHtml = await playerRes.text();
-        console.log('Player HTML (first 1000):', playerHtml.substring(0, 1000));
 
-        // Step 4: Stream URL patterns try karo
-        const streamPatterns = [
-            /file\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
-            /src\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
-            /source\s*:\s*["']([^"']+\.m3u8[^"']*)['"]/i,
-            /"url"\s*:\s*"([^"]+\.m3u8[^"]*)"/i,
-            /https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/i
-        ];
-
-        let streamUrl = null;
-        for (const pattern of streamPatterns) {
-            const match = playerHtml.match(pattern);
-            if (match) {
-                streamUrl = match[1] || match[0];
-                console.log('Stream found:', streamUrl);
-                break;
-            }
-        }
-
-        if (streamUrl) {
-            return res.status(200).json({
-                success: true,
-                embedUrl: streamUrl,
-                type: 'stream'
-            });
-        }
-
-        // Step 5: Agar m3u8 nahi mila, player URL hi return karo
-        console.log('No stream in player HTML, returning player URL');
+        // Return FULL player HTML for analysis
         return res.status(200).json({
             success: true,
-            embedUrl: playerUrl,
-            playerHtmlSnippet: playerHtml.substring(0, 500),
-            type: 'player-url'
+            playerUrl,
+            fullHtml: playerHtml,
+            type: 'debug'
         });
 
     } catch (err) {
-        console.log('Error:', err.message);
         return res.status(200).json({ success: true, embedUrl, type: 'error', error: err.message });
     }
 }
