@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.7 (Server Fixed)
+// 🌌 INDIPLEX - THE ABYSSAL VOID v6.0
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -7,7 +7,7 @@ const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
 // ==========================================
-// ✨ VISUALS: Intro & 3D RGB
+// ✨ VISUALS
 // ==========================================
 function initVisuals() {
     const intro = document.getElementById('intro-overlay');
@@ -27,21 +27,16 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ PHANTOM WINDOW SHIELD (Existing Logic)
+// 🛡️ PHANTOM SHIELD
 // ==========================================
 (function phantomShield() {
     const fakeWindow = {
-        closed: false,
-        focus:  () => {},
-        blur:   () => {},
-        close:  function() { this.closed = true; },
+        closed: false, focus: () => {}, blur: () => {},
+        close: function() { this.closed = true; },
         location: { href: '', assign: () => {}, replace: () => {} },
         document: { write: () => {}, close: () => {}, open: () => {} },
-        postMessage: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {}
+        postMessage: () => {}, addEventListener: () => {}, removeEventListener: () => {}
     };
-
     window.open = () => fakeWindow;
 
     document.addEventListener('click', (e) => {
@@ -57,11 +52,8 @@ function initVisuals() {
                 const cls = ((node.className || '') + (node.id || '')).toLowerCase();
                 if (
                     (tag === 'iframe' && node.id !== 'main-player') ||
-                    (tag === 'div' && /pop|overlay-ad|ad-layer|advert/i.test(cls)) ||
-                    (tag === 'a' && node.target === '_blank' && /casino|bet|adult|18\+/i.test(node.href || ''))
-                ) {
-                    node.remove();
-                }
+                    (tag === 'div' && /pop|overlay-ad|ad-layer|advert/i.test(cls))
+                ) node.remove();
             });
         });
     }).observe(document.documentElement, { childList: true, subtree: true });
@@ -72,7 +64,24 @@ function initVisuals() {
 })();
 
 // ==========================================
-// 🚀 PLAYER CORE (Updated Server Links)
+// 🎬 SERVER URLs
+// ==========================================
+function getServerUrl(server) {
+    const urls = {
+        vidsrc:     `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
+        vidlink:    `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=a855f7&autoplay=true`,
+        vidsrccc:   `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        embedsu:    `https://embed.su/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        superembed: `https://multiembed.mov/?video_id=${TMDB_ID}&tmdb=1&s=${currentS}&e=${currentE}`,
+        twoembed:   `https://www.2embed.stream/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        autoembed:  `https://autoembed.co/tv/tmdb/${TMDB_ID}-${currentS}-${currentE}`,
+        vidfast:    `https://vidfast.pro/tv/${TMDB_ID}/${currentS}/${currentE}?autoPlay=true`,
+    };
+    return urls[server] || urls.vidsrc;
+}
+
+// ==========================================
+// 🚀 PLAYER CORE
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
@@ -81,35 +90,11 @@ async function updatePlayer() {
     player.removeAttribute('sandbox');
     player.src = 'about:blank';
 
-    let finalUrl = '';
+    await new Promise(r => setTimeout(r, 100));
 
-    // --- SERVER LOGIC START ---
-    if (currentServer === 'vidsrc') {
-        // Cloudnestra Extraction Logic
-        const fallback = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
-        try {
-            const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
-            const data = await res.json();
-            finalUrl = (data.success && data.embedUrl) ? data.embedUrl : fallback;
-        } catch {
-            finalUrl = fallback;
-        }
-    } 
-    else if (currentServer === 'vidlink') {
-        finalUrl = `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=6a0dad&autoplay=true`;
-    } 
-    else if (currentServer === 'moviesapi') {
-        finalUrl = `https://moviesapi.to/tv/${TMDB_ID}/${currentS}/${currentE}`;
-    } 
-    else if (currentServer === 'videasy') {
-        finalUrl = `https://videasy.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
-    } 
-    else {
-        finalUrl = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
-    }
-    // --- SERVER LOGIC END ---
-
-    player.src = finalUrl;
+    player.removeAttribute('sandbox');
+    player.src = getServerUrl(currentServer);
+    console.log('✅ Loading server:', currentServer, player.src);
 }
 
 // ==========================================
@@ -155,8 +140,7 @@ async function loadEpisodes(num) {
             <div class="episode-card" onclick="window.playEpisode(${epi.episode_number})">
                 <div class="card-inner">
                     <div class="glow-layer"></div>
-                    ${epi.episode_number === currentE
-                        ? '<div class="playing-tag">PLAYING</div>' : ''}
+                    ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
                     <img class="epi-thumb"
                          src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}"
                          loading="lazy"
@@ -179,12 +163,12 @@ window.playEpisode = (num) => {
     loadEpisodes(currentS);
 };
 
-window.switchServer = (s) => {
+function switchServer(s) {
     currentServer = s;
     document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
     document.querySelector(`.server-btn[data-server="${s}"]`)?.classList.add('active');
     updatePlayer();
-};
+}
 
 // ==========================================
 // 🔥 BOOT
