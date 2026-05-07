@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.4
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.5
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -27,39 +27,51 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ PHANTOM WINDOW SHIELD
+// 🛡️ MAXIMUM PHANTOM SHIELD
 // ==========================================
 (function phantomShield() {
-    window.open = function(url) {
-        console.log('🛡️ Popup blocked:', url);
-        return {
-            closed: false,
-            focus:  () => {},
-            blur:   () => {},
-            close:  function() { this.closed = true; },
-            location: { href: url || '', assign: () => {}, replace: () => {} },
-            document: { write: () => {}, close: () => {}, open: () => {} },
-            postMessage: () => {},
-            addEventListener: () => {},
-            removeEventListener: () => {}
-        };
+    const fakeWindow = {
+        closed: false,
+        focus:  () => {},
+        blur:   () => {},
+        close:  function() { this.closed = true; },
+        location: { href: '', assign: () => {}, replace: () => {} },
+        document: { write: () => {}, close: () => {}, open: () => {} },
+        postMessage: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {}
     };
 
+    window.open = () => fakeWindow;
+
+    // Blank target links block karo
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('a[target="_blank"], a[target="blank"]');
+        if (el) e.preventDefault();
+    }, true);
+
+    // Bahar inject hone wale iframes aur overlays hatao
     new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
                 if (node.nodeType !== 1) return;
                 const tag = node.tagName?.toLowerCase();
-                const cls = (node.className || '') + (node.id || '');
+                const cls = ((node.className || '') + (node.id || '')).toLowerCase();
                 if (
                     (tag === 'iframe' && node.id !== 'main-player') ||
-                    (tag === 'div' && /pop|overlay-ad|ad-layer/i.test(cls))
+                    (tag === 'div' && /pop|overlay-ad|ad-layer|advert/i.test(cls)) ||
+                    (tag === 'a' && node.target === '_blank' && /casino|bet|adult|18\+/i.test(node.href || ''))
                 ) {
                     node.remove();
                 }
             });
         });
     }).observe(document.documentElement, { childList: true, subtree: true });
+
+    // Periodic cleanup — koi extra iframe bacha ho toh hatao
+    setInterval(() => {
+        document.querySelectorAll('iframe:not(#main-player)').forEach(el => el.remove());
+    }, 2000);
 })();
 
 // ==========================================
@@ -70,21 +82,21 @@ async function updatePlayer() {
     if (!player) return;
 
     player.removeAttribute('sandbox');
-    player.src = '';
+    player.src = 'about:blank';
 
     const fallback = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
+
+    await new Promise(r => setTimeout(r, 100));
 
     try {
         const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await res.json();
 
         if (data.success && data.embedUrl) {
-            if (data.type === 'cloudnestra') {
-                console.log('✅ Cloudnestra player loaded — minimal ads!');
-                player.setAttribute('sandbox',
-                    'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
-                );
-            }
+            console.log('✅ Loading:', data.type);
+            // Cloudnestra ke liye NO sandbox — warna black screen
+            // Popup block sirf phantom window se hoga
+            player.removeAttribute('sandbox');
             player.src = data.embedUrl;
         } else {
             player.src = fallback;
