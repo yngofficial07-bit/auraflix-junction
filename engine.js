@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v5.5
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.7 (Server Fixed)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -27,7 +27,7 @@ function initVisuals() {
 }
 
 // ==========================================
-// 🛡️ MAXIMUM PHANTOM SHIELD
+// 🛡️ PHANTOM WINDOW SHIELD (Existing Logic)
 // ==========================================
 (function phantomShield() {
     const fakeWindow = {
@@ -44,13 +44,11 @@ function initVisuals() {
 
     window.open = () => fakeWindow;
 
-    // Blank target links block karo
     document.addEventListener('click', (e) => {
         const el = e.target.closest('a[target="_blank"], a[target="blank"]');
         if (el) e.preventDefault();
     }, true);
 
-    // Bahar inject hone wale iframes aur overlays hatao
     new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
@@ -68,14 +66,13 @@ function initVisuals() {
         });
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-    // Periodic cleanup — koi extra iframe bacha ho toh hatao
     setInterval(() => {
         document.querySelectorAll('iframe:not(#main-player)').forEach(el => el.remove());
     }, 2000);
 })();
 
 // ==========================================
-// 🚀 PLAYER CORE
+// 🚀 PLAYER CORE (Updated Server Links)
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
@@ -84,26 +81,35 @@ async function updatePlayer() {
     player.removeAttribute('sandbox');
     player.src = 'about:blank';
 
-    const fallback = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
+    let finalUrl = '';
 
-    await new Promise(r => setTimeout(r, 100));
-
-    try {
-        const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
-        const data = await res.json();
-
-        if (data.success && data.embedUrl) {
-            console.log('✅ Loading:', data.type);
-            // Cloudnestra ke liye NO sandbox — warna black screen
-            // Popup block sirf phantom window se hoga
-            player.removeAttribute('sandbox');
-            player.src = data.embedUrl;
-        } else {
-            player.src = fallback;
+    // --- SERVER LOGIC START ---
+    if (currentServer === 'vidsrc') {
+        // Cloudnestra Extraction Logic
+        const fallback = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
+        try {
+            const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
+            const data = await res.json();
+            finalUrl = (data.success && data.embedUrl) ? data.embedUrl : fallback;
+        } catch {
+            finalUrl = fallback;
         }
-    } catch {
-        player.src = fallback;
+    } 
+    else if (currentServer === 'vidlink') {
+        finalUrl = `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=6a0dad&autoplay=true`;
+    } 
+    else if (currentServer === 'moviesapi') {
+        finalUrl = `https://moviesapi.to/tv/${TMDB_ID}/${currentS}/${currentE}`;
+    } 
+    else if (currentServer === 'videasy') {
+        finalUrl = `https://videasy.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
+    } 
+    else {
+        finalUrl = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
     }
+    // --- SERVER LOGIC END ---
+
+    player.src = finalUrl;
 }
 
 // ==========================================
@@ -173,12 +179,12 @@ window.playEpisode = (num) => {
     loadEpisodes(currentS);
 };
 
-function switchServer(s) {
+window.switchServer = (s) => {
     currentServer = s;
     document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
     document.querySelector(`.server-btn[data-server="${s}"]`)?.classList.add('active');
     updatePlayer();
-}
+};
 
 // ==========================================
 // 🔥 BOOT
