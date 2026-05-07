@@ -1,7 +1,14 @@
+// ==========================================
+// 🌌 INDIPLEX - THE ABYSSAL VOID v5.4
+// ==========================================
+
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732';
 let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 
+// ==========================================
+// ✨ VISUALS: Intro & 3D RGB
+// ==========================================
 function initVisuals() {
     const intro = document.getElementById('intro-overlay');
     if (intro) {
@@ -19,24 +26,45 @@ function initVisuals() {
     });
 }
 
+// ==========================================
+// 🛡️ PHANTOM WINDOW SHIELD
+// ==========================================
 (function phantomShield() {
     window.open = function(url) {
+        console.log('🛡️ Popup blocked:', url);
         return {
-            closed: false, focus: ()=>{}, blur: ()=>{},
-            close: function(){ this.closed = true; },
-            location: { href: url||'', assign:()=>{}, replace:()=>{} },
-            document: { write:()=>{}, close:()=>{} },
-            postMessage:()=>{}, addEventListener:()=>{}, removeEventListener:()=>{}
+            closed: false,
+            focus:  () => {},
+            blur:   () => {},
+            close:  function() { this.closed = true; },
+            location: { href: url || '', assign: () => {}, replace: () => {} },
+            document: { write: () => {}, close: () => {}, open: () => {} },
+            postMessage: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {}
         };
     };
+
     new MutationObserver((mutations) => {
-        mutations.forEach(m => m.addedNodes.forEach(node => {
-            if (node.nodeType !== 1) return;
-            if (node.tagName?.toLowerCase() === 'iframe' && node.id !== 'main-player') node.remove();
-        }));
+        mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+                if (node.nodeType !== 1) return;
+                const tag = node.tagName?.toLowerCase();
+                const cls = (node.className || '') + (node.id || '');
+                if (
+                    (tag === 'iframe' && node.id !== 'main-player') ||
+                    (tag === 'div' && /pop|overlay-ad|ad-layer/i.test(cls))
+                ) {
+                    node.remove();
+                }
+            });
+        });
     }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
+// ==========================================
+// 🚀 PLAYER CORE
+// ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     if (!player) return;
@@ -44,30 +72,31 @@ async function updatePlayer() {
     player.removeAttribute('sandbox');
     player.src = '';
 
-    const directEmbed = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
+    const fallback = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
 
     try {
-        const res  = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
+        const res = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await res.json();
 
         if (data.success && data.embedUrl) {
-            // Agar direct stream mili (m3u8 ya stream type) → clean player
-            if (data.type === 'stream' || data.embedUrl.includes('.m3u8')) {
-                console.log('✅ Direct stream! Zero ads.');
-                player.src = `player.html?source=${encodeURIComponent(data.embedUrl)}`;
-            } else {
-                // Fallback: direct iframe
-                console.log('⚠️ Fallback to embed');
-                player.src = directEmbed;
+            if (data.type === 'cloudnestra') {
+                console.log('✅ Cloudnestra player loaded — minimal ads!');
+                player.setAttribute('sandbox',
+                    'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-presentation'
+                );
             }
+            player.src = data.embedUrl;
         } else {
-            player.src = directEmbed;
+            player.src = fallback;
         }
     } catch {
-        player.src = directEmbed;
+        player.src = fallback;
     }
 }
 
+// ==========================================
+// 📺 UI: Seasons & Episodes
+// ==========================================
 async function initSeasons() {
     const container = document.getElementById('season-chips');
     if (!container) return;
@@ -76,17 +105,23 @@ async function initSeasons() {
         const data = await res.json();
         container.innerHTML = data.seasons
             .filter(s => s.season_number !== 0)
-            .map(s => `<div class="chip ${s.season_number === currentS ? 'active':''}" onclick="window.changeSeason(${s.season_number})">Season ${s.season_number}</div>`)
-            .join('');
+            .map(s =>
+                `<div class="chip ${s.season_number === currentS ? 'active' : ''}"
+                      onclick="window.changeSeason(${s.season_number})">
+                     Season ${s.season_number}
+                 </div>`
+            ).join('');
         loadEpisodes(currentS);
     } catch (err) { console.error(err); }
 }
 
 window.changeSeason = (num) => {
-    currentS = num; currentE = 1;
+    currentS = num;
+    currentE = 1;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.chip')[num-1]?.classList.add('active');
-    loadEpisodes(num); updatePlayer();
+    document.querySelectorAll('.chip')[num - 1]?.classList.add('active');
+    loadEpisodes(num);
+    updatePlayer();
 };
 
 async function loadEpisodes(num) {
@@ -97,22 +132,34 @@ async function loadEpisodes(num) {
         if (!grid) return;
         const countEl = document.getElementById('episode-count');
         if (countEl) countEl.textContent = `${data.episodes.length} episodes`;
+
         grid.innerHTML = data.episodes.map(epi => `
             <div class="episode-card" onclick="window.playEpisode(${epi.episode_number})">
                 <div class="card-inner">
                     <div class="glow-layer"></div>
-                    ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
-                    <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path||''}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x281?text=No+Preview'">
+                    ${epi.episode_number === currentE
+                        ? '<div class="playing-tag">PLAYING</div>' : ''}
+                    <img class="epi-thumb"
+                         src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/500x281?text=No+Preview'">
                     <div class="epi-info">
                         <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                        <div class="epi-meta">${epi.runtime ? epi.runtime+' min' : ''} ${epi.vote_average ? '⭐ '+epi.vote_average.toFixed(1) : ''}</div>
+                        <div class="epi-meta">
+                            ${epi.runtime ? epi.runtime + ' min' : ''}
+                            ${epi.vote_average ? '⭐ ' + epi.vote_average.toFixed(1) : ''}
+                        </div>
                     </div>
                 </div>
             </div>`).join('');
     } catch (err) { console.error(err); }
 }
 
-window.playEpisode = (num) => { currentE = num; updatePlayer(); loadEpisodes(currentS); };
+window.playEpisode = (num) => {
+    currentE = num;
+    updatePlayer();
+    loadEpisodes(currentS);
+};
 
 function switchServer(s) {
     currentServer = s;
@@ -121,4 +168,11 @@ function switchServer(s) {
     updatePlayer();
 }
 
-document.addEventListener('DOMContentLoaded', () => { initVisuals(); initSeasons(); updatePlayer(); });
+// ==========================================
+// 🔥 BOOT
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    initVisuals();
+    initSeasons();
+    updatePlayer();
+});
