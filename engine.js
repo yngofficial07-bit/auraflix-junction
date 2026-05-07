@@ -1,5 +1,5 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v6.0
+// 🌌 INDIPLEX - THE ABYSSAL VOID v6.1
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -68,14 +68,11 @@ function initVisuals() {
 // ==========================================
 function getServerUrl(server) {
     const urls = {
-        vidsrc:     `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink:    `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=a855f7&autoplay=true`,
-        vidsrccc:   `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        embedsu:    `https://embed.su/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        superembed: `https://multiembed.mov/?video_id=${TMDB_ID}&tmdb=1&s=${currentS}&e=${currentE}`,
-        twoembed:   `https://www.2embed.stream/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        autoembed:  `https://autoembed.co/tv/tmdb/${TMDB_ID}-${currentS}-${currentE}`,
-        vidfast:    `https://vidfast.pro/tv/${TMDB_ID}/${currentS}/${currentE}?autoPlay=true`,
+        vidsrc:   `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
+        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=a855f7&autoplay=true`,
+        vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        twoembed: `https://www.2embed.stream/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        vidfast:  `https://vidfast.pro/tv/${TMDB_ID}/${currentS}/${currentE}?autoPlay=true`,
     };
     return urls[server] || urls.vidsrc;
 }
@@ -94,7 +91,7 @@ async function updatePlayer() {
 
     player.removeAttribute('sandbox');
     player.src = getServerUrl(currentServer);
-    console.log('✅ Loading server:', currentServer, player.src);
+    console.log('✅ Loading server:', currentServer);
 }
 
 // ==========================================
