@@ -5,7 +5,10 @@ let currentS = 1, currentE = 1, currentServer = 'vidsrc';
 function initVisuals() {
     const intro = document.getElementById('intro-overlay');
     if (intro) {
-        setTimeout(() => { intro.style.opacity = '0'; setTimeout(() => intro.remove(), 1000); }, 2500);
+        setTimeout(() => {
+            intro.style.opacity = '0';
+            setTimeout(() => intro.remove(), 1000);
+        }, 2500);
     }
     document.addEventListener('mousemove', (e) => {
         document.querySelectorAll('.episode-card, .server-btn, .chip').forEach(card => {
@@ -41,19 +44,27 @@ async function updatePlayer() {
     player.removeAttribute('sandbox');
     player.src = '';
 
-    const fallback = {
-        vidsrc:   `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=ffffff`,
-        vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        videasy:  `https://player.vidsrc.nl/embed/tv/${TMDB_ID}/${currentS}/${currentE}`
-    };
+    const directEmbed = `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`;
 
     try {
         const res  = await fetch(`/api/extract?tmdb=${TMDB_ID}&s=${currentS}&e=${currentE}`);
         const data = await res.json();
-        player.src = (data.success && data.embedUrl) ? data.embedUrl : fallback.vidsrc;
+
+        if (data.success && data.embedUrl) {
+            // Agar direct stream mili (m3u8 ya stream type) → clean player
+            if (data.type === 'stream' || data.embedUrl.includes('.m3u8')) {
+                console.log('✅ Direct stream! Zero ads.');
+                player.src = `player.html?source=${encodeURIComponent(data.embedUrl)}`;
+            } else {
+                // Fallback: direct iframe
+                console.log('⚠️ Fallback to embed');
+                player.src = directEmbed;
+            }
+        } else {
+            player.src = directEmbed;
+        }
     } catch {
-        player.src = fallback[currentServer] || fallback.vidsrc;
+        player.src = directEmbed;
     }
 }
 
@@ -65,7 +76,7 @@ async function initSeasons() {
         const data = await res.json();
         container.innerHTML = data.seasons
             .filter(s => s.season_number !== 0)
-            .map(s => `<div class="chip ${s.season_number === currentS ? 'active' : ''}" onclick="window.changeSeason(${s.season_number})">Season ${s.season_number}</div>`)
+            .map(s => `<div class="chip ${s.season_number === currentS ? 'active':''}" onclick="window.changeSeason(${s.season_number})">Season ${s.season_number}</div>`)
             .join('');
         loadEpisodes(currentS);
     } catch (err) { console.error(err); }
@@ -74,7 +85,7 @@ async function initSeasons() {
 window.changeSeason = (num) => {
     currentS = num; currentE = 1;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.chip')[num - 1]?.classList.add('active');
+    document.querySelectorAll('.chip')[num-1]?.classList.add('active');
     loadEpisodes(num); updatePlayer();
 };
 
@@ -91,10 +102,10 @@ async function loadEpisodes(num) {
                 <div class="card-inner">
                     <div class="glow-layer"></div>
                     ${epi.episode_number === currentE ? '<div class="playing-tag">PLAYING</div>' : ''}
-                    <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path || ''}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x281?text=No+Preview'">
+                    <img class="epi-thumb" src="https://image.tmdb.org/t/p/w500${epi.still_path||''}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x281?text=No+Preview'">
                     <div class="epi-info">
                         <div class="epi-title">E${epi.episode_number}: ${epi.name}</div>
-                        <div class="epi-meta">${epi.runtime ? epi.runtime + ' min' : ''} ${epi.vote_average ? '⭐ ' + epi.vote_average.toFixed(1) : ''}</div>
+                        <div class="epi-meta">${epi.runtime ? epi.runtime+' min' : ''} ${epi.vote_average ? '⭐ '+epi.vote_average.toFixed(1) : ''}</div>
                     </div>
                 </div>
             </div>`).join('');
