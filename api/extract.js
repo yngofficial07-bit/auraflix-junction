@@ -8,21 +8,16 @@ export default async function handler(req, res) {
 
     const embedUrl = `https://vidsrc.me/embed/tv?tmdb=${tmdb}&sea=${s}&epi=${e}`;
     const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
         'Referer': 'https://vidsrc.me/',
         'Cache-Control': 'no-cache'
     };
 
     try {
-        // Step 1: Main page
+        // Step 1: Main page → data-iframe nikalo
         const pageRes = await fetch(embedUrl, { headers });
         const html = await pageRes.text();
-
-        if (html.includes('Just a moment') || html.includes('Checking your browser')) {
-            return res.status(200).json({ success: true, embedUrl, type: 'cf-blocked' });
-        }
 
         const dataIframeMatch = html.match(/data-iframe="([^"]+)"/);
         if (!dataIframeMatch) {
@@ -31,21 +26,66 @@ export default async function handler(req, res) {
 
         const playerUrl = `https://vidsrc.me${dataIframeMatch[1]}`;
 
-        // Step 2: Player page
+        // Step 2: Player page → cloudnestra URL nikalo
         const playerRes = await fetch(playerUrl, {
             headers: { ...headers, 'Referer': 'https://vidsrc.me/' }
         });
         const playerHtml = await playerRes.text();
 
-        // Return FULL player HTML for analysis
+        // cloudnestra iframe src nikalo
+        const cloudnestraMatch = playerHtml.match(/src="(\/\/cloudnestra\.com\/rcp\/[^"]+)"/);
+        if (!cloudnestraMatch) {
+            return res.status(200).json({ success: true, embedUrl, type: 'no-cloudnestra' });
+        }
+
+        const cloudnestraUrl = 'https:' + cloudnestraMatch[1];
+        console.log('Cloudnestra URL:', cloudnestraUrl);
+
+        // Step 3: cloudnestra page fetch karo
+        const cloudRes = await fetch(cloudnestraUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://vidsrc.me/',
+                'Accept': 'text/html,application/xhtml+xml,*/*'
+            }
+        });
+        const cloudHtml = await cloudRes.text();
+
+        // m3u8 ya stream URL patterns
+        const streamPatterns = [
+            /["']([^"']+\.m3u8[^"']*)['"]/i,
+            /file\s*:\s*["']([^"']+)['"]/i,
+            /source\s*:\s*["']([^"']+)['"]/i,
+            /"url"\s*:\s*"([^"]+)"/i
+        ];
+
+        let streamUrl = null;
+        for (const pattern of streamPatterns) {
+            const match = cloudHtml.match(pattern);
+            if (match && match[1] && (match[1].includes('m3u8') || match[1].includes('http'))) {
+                streamUrl = match[1];
+                break;
+            }
+        }
+
+        if (streamUrl) {
+            return res.status(200).json({
+                success: true,
+                embedUrl: streamUrl,
+                type: 'stream'
+            });
+        }
+
+        // Agar m3u8 nahi mila, cloudnestra URL return karo (ye iframe-friendly ho sakta hai)
         return res.status(200).json({
             success: true,
-            playerUrl,
-            fullHtml: playerHtml,
-            type: 'debug'
+            embedUrl: cloudnestraUrl,
+            type: 'cloudnestra-embed',
+            debug: cloudHtml.substring(0, 300)
         });
 
     } catch (err) {
+        console.log('Error:', err.message);
         return res.status(200).json({ success: true, embedUrl, type: 'error', error: err.message });
     }
 }
