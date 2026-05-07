@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // No cache
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (req.method === 'OPTIONS') { res.status(200).end(); return; }
@@ -21,26 +20,56 @@ export default async function handler(req, res) {
         });
 
         const html = await pageRes.text();
-        
-        // Log first 500 chars for debugging
-        console.log('HTML preview:', html.substring(0, 500));
 
-        if (html.includes('Just a moment') || html.includes('cf-browser-verification') || html.includes('Checking your browser')) {
-            console.log('Cloudflare blocked');
+        // Log full HTML so we can see structure
+        console.log('=== FULL HTML START ===');
+        console.log(html);
+        console.log('=== FULL HTML END ===');
+
+        if (html.includes('Just a moment') || html.includes('Checking your browser')) {
             return res.status(200).json({ success: true, embedUrl, type: 'cloudflare-blocked' });
         }
 
-        const idMatch = html.match(/data-id="([^"]+)"/);
-        if (!idMatch) {
-            console.log('No data-id found');
-            return res.status(200).json({ success: true, embedUrl, type: 'no-id' });
+        // Try ALL possible patterns
+        const patterns = [
+            /data-id="([^"]+)"/,
+            /data-hash="([^"]+)"/,
+            /data-source="([^"]+)"/,
+            /data-ep="([^"]+)"/,
+            /"episode_id"\s*:\s*"([^"]+)"/,
+            /episodeId\s*=\s*['"]([^'"]+)['"]/,
+            /embed\/source\/([a-zA-Z0-9]+)/,
+            /sources\/([a-zA-Z0-9]+)/
+        ];
+
+        let foundId = null;
+        let foundPattern = null;
+        for (const pattern of patterns) {
+            const match = html.match(pattern);
+            if (match) {
+                foundId = match[1];
+                foundPattern = pattern.toString();
+                console.log('Pattern matched:', foundPattern, '→', foundId);
+                break;
+            }
         }
 
-        const sourceId = idMatch[1];
-        console.log('Source ID:', sourceId);
+        if (!foundId) {
+            // Return a snippet of HTML so we can see structure
+            const snippet = html.replace(/<script[\s\S]*?<\/script>/gi, '[SCRIPT]')
+                                .replace(/<style[\s\S]*?<\/style>/gi, '[STYLE]')
+                                .substring(0, 2000);
+            console.log('No pattern matched. HTML snippet:', snippet);
+            return res.status(200).json({ 
+                success: true, 
+                embedUrl, 
+                type: 'no-id',
+                htmlSnippet: snippet
+            });
+        }
 
         const sourcesRes = await fetch(
-            `https://vidsrc.me/ajax/embed/episode/${sourceId}/sources`,
+            `https://vidsrc.me/ajax/embed/episode/${foundId}/sources`,
             {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -51,7 +80,7 @@ export default async function handler(req, res) {
         );
 
         const sourcesData = await sourcesRes.json();
-        console.log('Sources:', JSON.stringify(sourcesData));
+        console.log('Sources response:', JSON.stringify(sourcesData));
 
         if (!sourcesData.result || sourcesData.result.length === 0) {
             return res.status(200).json({ success: true, embedUrl, type: 'no-sources' });
@@ -73,7 +102,6 @@ export default async function handler(req, res) {
         console.log('Source data:', JSON.stringify(sourceData));
 
         const streamUrl = sourceData.result?.url;
-
         if (streamUrl) {
             return res.status(200).json({ success: true, embedUrl: streamUrl, type: 'stream' });
         }
