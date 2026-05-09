@@ -4,8 +4,7 @@
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
 const TMDB_ID = '66732';
-let currentS = 1, currentE = 1, currentServer = 'vidsrc';
-
+let currentS = 1, currentE = 1, currentServer = 'vidlink';
 // ==========================================
 // ✨ VISUALS
 // ==========================================
