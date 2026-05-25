@@ -1,10 +1,16 @@
 // ==========================================
-// 🌌 INDIPLEX - THE ABYSSAL VOID v6.1
+// 🌌 INDIPLEX - THE ABYSSAL VOID v6.1 (UPDATED)
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
-const TMDB_ID = '66732';
+
+// Dynamic ID extraction from URL
+const urlParams = new URLSearchParams(window.location.search);
+const TMDB_ID = urlParams.get('id') || '66732'; // Default Stranger Things
+const TYPE = urlParams.get('type') || 'tv'; 
+
 let currentS = 1, currentE = 1, currentServer = 'vidlink';
+
 // ==========================================
 // ✨ VISUALS
 // ==========================================
@@ -67,11 +73,11 @@ function initVisuals() {
 // ==========================================
 function getServerUrl(server) {
     const urls = {
-        vidsrc:   `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
-        vidlink:  `https://vidlink.pro/tv/${TMDB_ID}/${currentS}/${currentE}?primaryColor=a855f7&autoplay=true`,
-        vidsrccc: `https://vidsrc.cc/v2/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        twoembed: `https://www.2embed.stream/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
-        vidfast:  `https://vidfast.pro/tv/${TMDB_ID}/${currentS}/${currentE}?autoPlay=true`,
+        vidsrc:   `https://vidsrc.me/embed/${TYPE}?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
+        vidlink:  `https://vidlink.pro/${TYPE}/${TMDB_ID}/${currentS}/${currentE}?primaryColor=a855f7&autoplay=true`,
+        vidsrccc: `https://vidsrc.cc/v2/embed/${TYPE}/${TMDB_ID}/${currentS}/${currentE}`,
+        twoembed: `https://www.2embed.stream/embed/${TYPE}/${TMDB_ID}/${currentS}/${currentE}`,
+        vidfast:  `https://vidfast.pro/${TYPE}/${TMDB_ID}/${currentS}/${currentE}?autoPlay=true`,
     };
     return urls[server] || urls.vidsrc;
 }
@@ -97,6 +103,12 @@ async function updatePlayer() {
 // 📺 UI: Seasons & Episodes
 // ==========================================
 async function initSeasons() {
+    if (TYPE === 'movie') {
+        const selector = document.getElementById('season-chips');
+        if (selector) selector.style.display = 'none';
+        return;
+    }
+
     const container = document.getElementById('season-chips');
     if (!container) return;
     try {
@@ -107,7 +119,7 @@ async function initSeasons() {
             .map(s =>
                 `<div class="chip ${s.season_number === currentS ? 'active' : ''}"
                       onclick="window.changeSeason(${s.season_number})">
-                     Season ${s.season_number}
+                      Season ${s.season_number}
                  </div>`
             ).join('');
         loadEpisodes(currentS);
@@ -124,6 +136,7 @@ window.changeSeason = (num) => {
 };
 
 async function loadEpisodes(num) {
+    if (TYPE === 'movie') return;
     try {
         const res  = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${num}?api_key=${API_KEY}`);
         const data = await res.json();
@@ -173,4 +186,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initVisuals();
     initSeasons();
     updatePlayer();
+});
+// Search Functionality
+document.getElementById('search-input')?.addEventListener('input', async (e) => {
+    const query = e.target.value;
+    const resultsDiv = document.getElementById('search-results');
+    if (query.length < 3) { resultsDiv.innerHTML = ''; return; }
+
+    const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${query}`);
+    const data = await res.json();
+    
+    resultsDiv.innerHTML = data.results.slice(0, 5).map(item => `
+        <div style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer;" 
+             onclick="window.location='index.html?id=${item.id}&type=${item.media_type}'">
+            ${item.title || item.name} (${item.media_type})
+        </div>
+    `).join('');
 });
