@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>INDIPLEX Search</title>
+    <style>
+        body { background: #050505; color: white; font-family: sans-serif; padding: 20px; }
+        input { width: 100%; padding: 15px; border-radius: 8px; border: none; background: #181818; color: white; font-size: 18px; }
+        #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .item { cursor: pointer; }
+        img { width: 100%; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <input type="text" id="search" placeholder="Search Movies/Shows...">
+    <div id="results"></div>
+
+    <script>
+        const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
+        document.getElementById('search').addEventListener('input', async (e) => {
+            const query = e.target.value;
+            if (query.length < 3) return;
+            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${query}`);
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.results.map(item => `
+                <div class="item" onclick="window.location='index.html?id=${item.id}&type=${item.media_type}'">
+                    <img src="https://image.tmdb.org/t/p/w500${item.poster_path}">
+                    <p>${item.title || item.name}</p>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>
