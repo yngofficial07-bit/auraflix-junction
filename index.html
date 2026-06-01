@@ -10,29 +10,38 @@
 </head>
 <body>
 
+<!-- AMBIENT ORBS -->
+<div class="ambient-bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+</div>
+
 <!-- TOP NAV -->
 <nav class="top-nav">
     <a href="https://v0-netflix-homepage-clone.vercel.app" class="nav-logo">
+        <div class="logo-icon">A</div>
         <span class="logo-text">AURA<span class="logo-accent">FLIX</span></span>
     </a>
     <div class="search-wrap">
-        <span class="search-icon">⌕</span>
+        <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="search-input" placeholder="Search movies, shows..." autocomplete="off">
         <div id="search-results" class="search-dropdown"></div>
     </div>
     <div class="nav-right">
         <span id="show-title-nav" class="nav-show-title"></span>
+        <div class="nav-badge">4K</div>
     </div>
 </nav>
 
-<!-- MAIN -->
+<!-- LAYOUT -->
 <div class="app-layout">
 
     <!-- PLAYER COLUMN -->
     <div class="player-column">
 
-        <!-- Show Info Bar -->
-        <div class="show-info-bar" id="show-info-bar">
+        <!-- Info Bar -->
+        <div class="show-info-bar">
             <div class="show-info-left">
                 <div class="show-poster-mini" id="show-poster-mini"></div>
                 <div class="show-meta">
@@ -45,64 +54,66 @@
                     </div>
                 </div>
             </div>
-            <div class="ep-nav-btns">
-                <button class="ep-nav-btn" id="prev-ep-btn" onclick="prevEpisode()" title="Previous Episode">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-                    <span>Prev</span>
+            <div class="ep-nav-btns" id="ep-nav-btns">
+                <button class="ep-nav-btn" id="prev-ep-btn" onclick="prevEpisode()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+                    Prev
                 </button>
-                <button class="ep-nav-btn" id="next-ep-btn" onclick="nextEpisode()" title="Next Episode">
-                    <span>Next</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                <button class="ep-nav-btn ep-next" id="next-ep-btn" onclick="nextEpisode()">
+                    Next
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                 </button>
             </div>
         </div>
 
-        <!-- Player Frame -->
+        <!-- PLAYER FRAME -->
         <div class="player-wrap">
-            <div class="player-glow"></div>
-            <iframe
-                id="main-player"
-                src=""
-                frameborder="0"
-                allowfullscreen
+            <div class="player-glow-ring"></div>
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <iframe id="main-player" src="" frameborder="0" allowfullscreen
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 referrerpolicy="no-referrer">
             </iframe>
             <div class="player-loader" id="player-loader">
                 <div class="loader-ring"></div>
-                <span class="loader-text">Loading stream...</span>
+                <p class="loader-txt">Fetching stream<span class="dot-anim">...</span></p>
             </div>
         </div>
 
-        <!-- Server Bar -->
+        <!-- SERVER BAR -->
         <div class="server-bar">
-            <div class="server-bar-left">
-                <span class="server-label-txt">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
-                    Stream Source
-                </span>
+            <div class="server-label-wrap">
+                <span class="live-dot"></span>
+                <span class="server-label-txt">STREAM SOURCE</span>
             </div>
             <div class="server-chips" id="server-list">
                 <button class="s-chip active" data-server="vidsrc" onclick="switchServer('vidsrc')">
-                    <span class="s-dot"></span>VidSrc
+                    <span class="chip-dot"></span>VidSrc
                 </button>
-                <button class="s-chip" data-server="vidsrccc2" onclick="switchServer('vidsrccc2')">
-                    <span class="s-dot"></span>VidSrc CC
+                <button class="s-chip" data-server="vidsrcto" onclick="switchServer('vidsrcto')">
+                    <span class="chip-dot"></span>VidSrc.to
                 </button>
                 <button class="s-chip" data-server="twoembed" onclick="switchServer('twoembed')">
-                    <span class="s-dot"></span>2Embed
+                    <span class="chip-dot"></span>2Embed
                 </button>
-                <button class="s-chip" data-server="smashystream" onclick="switchServer('smashystream')">
-                    <span class="s-dot"></span>Smashy
+                <button class="s-chip" data-server="moviesapi" onclick="switchServer('moviesapi')">
+                    <span class="chip-dot"></span>MoviesAPI
                 </button>
-                <button class="s-chip" data-server="autoembed" onclick="switchServer('autoembed')">
-                    <span class="s-dot"></span>AutoEmbed
+                <button class="s-chip" data-server="nontongo" onclick="switchServer('nontongo')">
+                    <span class="chip-dot"></span>NontonGo
                 </button>
             </div>
         </div>
 
-        <!-- Show Overview -->
-        <div class="show-overview-box" id="show-overview-box" style="display:none">
+        <!-- OVERVIEW -->
+        <div class="overview-box" id="show-overview-box" style="display:none">
+            <div class="overview-header">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                OVERVIEW
+            </div>
             <p id="show-overview-text"></p>
         </div>
 
@@ -113,22 +124,17 @@
         <div class="ep-panel">
             <div class="ep-panel-header">
                 <div class="ep-panel-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/></svg>
-                    Episodes
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/></svg>
+                    EPISODES
                 </div>
-                <span class="ep-count-badge" id="episode-count">0 eps</span>
+                <span class="ep-count-badge" id="episode-count">— eps</span>
             </div>
-
-            <!-- Season Chips -->
             <div class="season-scroll" id="season-chips"></div>
-
-            <!-- Episode List -->
             <div class="ep-list" id="episode-grid"></div>
         </div>
     </div>
 
 </div>
-
 <script src="engine.js"></script>
 </body>
 </html>
