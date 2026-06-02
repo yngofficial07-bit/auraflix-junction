@@ -1,5 +1,6 @@
 // ==========================================
-// 🌌 AURAFLIX — ENGINE v8.0
+// 🌌 AURAFLIX ENGINE v9.0
+// Episode bug fixed + working servers
 // ==========================================
 
 const API_KEY = '51e8f6fa27967e18cd00a4e246cb4b6b';
@@ -20,9 +21,9 @@ let allEpisodesData = [];
 (function phantomShield() {
     const fake = {
         closed: false, focus:()=>{}, blur:()=>{},
-        close: function(){ this.closed=true; },
-        location:{href:'',assign:()=>{},replace:()=>{}},
-        document:{write:()=>{},close:()=>{},open:()=>{}},
+        close: function(){ this.closed = true; },
+        location: { href:'', assign:()=>{}, replace:()=>{} },
+        document: { write:()=>{}, close:()=>{}, open:()=>{} },
         postMessage:()=>{}, addEventListener:()=>{}, removeEventListener:()=>{}
     };
     window.open = () => fake;
@@ -38,13 +39,13 @@ let allEpisodesData = [];
                 if (node.nodeType !== 1) return;
                 const tag = node.tagName?.toLowerCase();
                 const cls = ((node.className||'')+(node.id||'')).toLowerCase();
-                if ((tag==='iframe' && node.id!=='main-player') ||
-                    (tag==='div' && /pop|overlay-ad|advert/i.test(cls))) {
+                if ((tag === 'iframe' && node.id !== 'main-player') ||
+                    (tag === 'div' && /pop|overlay-ad|advert/i.test(cls))) {
                     node.remove();
                 }
             });
         });
-    }).observe(document.documentElement, {childList:true, subtree:true});
+    }).observe(document.documentElement, { childList: true, subtree: true });
 
     setInterval(() => {
         document.querySelectorAll('iframe:not(#main-player)').forEach(el => el.remove());
@@ -52,64 +53,67 @@ let allEpisodesData = [];
 })();
 
 // ==========================================
-// 🎬 WORKING SERVERS 2026
+// 🎬 SERVER URLs — ALL WORKING 2026
 // ==========================================
 function getServerUrl(server) {
-    const isMovie = TYPE === 'movie';
-    const urls = {
-        vidsrc: isMovie
-            ? `https://vidsrc.me/embed/movie?tmdb=${TMDB_ID}`
-            : `https://vidsrc.me/embed/tv?tmdb=${TMDB_ID}&sea=${currentS}&epi=${currentE}`,
+    const m = TYPE === 'movie';
+    const id = TMDB_ID;
+    const s = currentS;
+    const e = currentE;
 
-        vidsrcto: isMovie
-            ? `https://vidsrc.to/embed/movie/${TMDB_ID}`
-            : `https://vidsrc.to/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+    const map = {
+        vidsrc:    m ? `https://vidsrc.me/embed/movie?tmdb=${id}`
+                     : `https://vidsrc.me/embed/tv?tmdb=${id}&sea=${s}&epi=${e}`,
 
-        twoembed: isMovie
-            ? `https://www.2embed.stream/embed/movie/${TMDB_ID}`
-            : `https://www.2embed.stream/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        vidsrcto:  m ? `https://vidsrc.to/embed/movie/${id}`
+                     : `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
 
-        moviesapi: isMovie
-            ? `https://moviesapi.club/movie/${TMDB_ID}`
-            : `https://moviesapi.club/tv/${TMDB_ID}-${currentS}-${currentE}`,
+        twoembed:  m ? `https://www.2embed.stream/embed/movie/${id}`
+                     : `https://www.2embed.stream/embed/tv/${id}/${s}/${e}`,
 
-        nontongo: isMovie
-            ? `https://www.nontongo.win/embed/movie/${TMDB_ID}`
-            : `https://www.nontongo.win/embed/tv/${TMDB_ID}/${currentS}/${currentE}`,
+        moviesapi: m ? `https://moviesapi.club/movie/${id}`
+                     : `https://moviesapi.club/tv/${id}-${s}-${e}`,
+
+        nontongo:  m ? `https://www.nontongo.win/embed/movie/${id}`
+                     : `https://www.nontongo.win/embed/tv/${id}/${s}/${e}`,
     };
-    return urls[server] || urls.vidsrc;
+    return map[server] || map.vidsrc;
 }
 
 // ==========================================
-// 🚀 PLAYER
+// 🚀 PLAYER — EPISODE BUG FIXED
 // ==========================================
 async function updatePlayer() {
     const player = document.getElementById('main-player');
     const loader = document.getElementById('player-loader');
+    const loaderSub = document.getElementById('loader-server');
+
     if (!player) return;
 
+    // Show loader
     if (loader) loader.classList.add('show');
-    player.removeAttribute('sandbox');
-    player.src = 'about:blank';
-    await new Promise(r => setTimeout(r, 120));
-    player.src = getServerUrl(currentServer);
+    if (loaderSub) loaderSub.textContent = currentServer;
 
+    // IMPORTANT: Remove src first, then set new src after delay
+    // This fixes the episode-not-changing bug
+    player.removeAttribute('sandbox');
+    player.src = '';
+
+    // Wait for browser to register blank
+    await new Promise(r => setTimeout(r, 200));
+
+    const newUrl = getServerUrl(currentServer);
+    player.src = newUrl;
+    console.log(`▶ Playing: S${currentS}E${currentE} via ${currentServer}`, newUrl);
+
+    // Hide loader after timeout
     setTimeout(() => {
         if (loader) loader.classList.remove('show');
-    }, 3500);
+    }, 4000);
 
     updateEpTag();
     updateNavButtons();
-
-    // Update URL
-    const url = new URL(window.location);
-    url.searchParams.set('id', TMDB_ID);
-    url.searchParams.set('type', TYPE);
-    if (TYPE === 'tv') {
-        url.searchParams.set('s', currentS);
-        url.searchParams.set('e', currentE);
-    }
-    window.history.replaceState({}, '', url);
+    updateURL();
 }
 
 function updateEpTag() {
@@ -127,45 +131,65 @@ function updateNavButtons() {
     const prev = document.getElementById('prev-ep-btn');
     const next = document.getElementById('next-ep-btn');
     if (!prev || !next) return;
+
     if (TYPE === 'movie') {
-        document.getElementById('ep-nav-btns')?.style && (document.getElementById('ep-nav-btns').style.display = 'none');
+        const btns = document.getElementById('ep-nav-btns');
+        if (btns) btns.style.display = 'none';
         return;
     }
+
     prev.disabled = (currentS === 1 && currentE === 1);
     next.disabled = (currentS === totalSeasons && currentE === totalEpisodes);
 }
 
+function updateURL() {
+    try {
+        const url = new URL(window.location);
+        url.searchParams.set('id', TMDB_ID);
+        url.searchParams.set('type', TYPE);
+        if (TYPE === 'tv') {
+            url.searchParams.set('s', currentS);
+            url.searchParams.set('e', currentE);
+        }
+        window.history.replaceState({}, '', url);
+    } catch(e) {}
+}
+
 // ==========================================
-// ⏮ PREV / NEXT
+// ⏮ PREV / NEXT EPISODE
 // ==========================================
 window.prevEpisode = async () => {
     if (currentE > 1) {
         currentE--;
+        renderEpisodes(allEpisodesData);
+        await updatePlayer();
     } else if (currentS > 1) {
         currentS--;
-        try {
-            const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${currentS}?api_key=${API_KEY}`);
-            const d = await res.json();
-            currentE = d.episodes?.length || 1;
-            totalEpisodes = currentE;
-        } catch { currentE = 1; }
+        const res = await fetch(`https://api.themoviedb.org/3/tv/${TMDB_ID}/season/${currentS}?api_key=${API_KEY}`);
+        const d = await res.json();
+        const eps = d.episodes || [];
+        currentE = eps.length;
+        totalEpisodes = eps.length;
+        allEpisodesData = eps;
         updateSeasonChips();
+        renderEpisodes(eps);
+        await updatePlayer();
+        document.getElementById('episode-count').textContent = `${eps.length} eps`;
     }
-    await loadEpisodes(currentS);
-    updatePlayer();
 };
 
 window.nextEpisode = async () => {
     if (currentE < totalEpisodes) {
         currentE++;
+        renderEpisodes(allEpisodesData);
+        await updatePlayer();
     } else if (currentS < totalSeasons) {
         currentS++;
         currentE = 1;
         updateSeasonChips();
         await loadEpisodes(currentS);
+        await updatePlayer();
     }
-    updatePlayer();
-    renderEpisodes(allEpisodesData);
 };
 
 // ==========================================
@@ -180,38 +204,32 @@ async function loadShowInfo() {
         const res = await fetch(url);
         const d = await res.json();
 
-        const title = d.title || d.name || 'Unknown';
-        const year  = (d.release_date || d.first_air_date || '').substring(0, 4);
-        const rating = d.vote_average ? d.vote_average.toFixed(1) : '';
-        const poster = d.poster_path ? `https://image.tmdb.org/t/p/w200${d.poster_path}` : '';
+        const title   = d.title || d.name || 'Unknown';
+        const year    = (d.release_date || d.first_air_date || '').substring(0, 4);
+        const rating  = d.vote_average ? d.vote_average.toFixed(1) : '';
+        const poster  = d.poster_path ? `https://image.tmdb.org/t/p/w200${d.poster_path}` : '';
         const overview = d.overview || '';
 
-        // Title
         const titleEl = document.getElementById('show-title');
         if (titleEl) titleEl.textContent = title;
 
-        const navTitle = document.getElementById('show-title-nav');
-        if (navTitle) navTitle.textContent = title;
+        const navEl = document.getElementById('show-title-nav');
+        if (navEl) navEl.textContent = title;
 
         document.title = `${title} — AuraFlix`;
 
-        // Tags
         const rEl = document.getElementById('show-rating');
-        if (rEl && rating) { rEl.textContent = `⭐ ${rating}`; }
+        if (rEl) { rEl.textContent = `⭐ ${rating}`; rEl.style.display = rating ? '' : 'none'; }
 
         const yEl = document.getElementById('show-year');
-        if (yEl && year) { yEl.textContent = year; }
+        if (yEl) { yEl.textContent = year; yEl.style.display = year ? '' : 'none'; }
 
         const tEl = document.getElementById('show-type');
-        if (tEl) { tEl.textContent = TYPE === 'movie' ? '🎬 Movie' : '📺 Series'; }
+        if (tEl) tEl.textContent = TYPE === 'movie' ? '🎬 Movie' : '📺 Series';
 
-        // Poster
         const pEl = document.getElementById('show-poster-mini');
-        if (pEl && poster) {
-            pEl.innerHTML = `<img src="${poster}" alt="${title}">`;
-        }
+        if (pEl && poster) pEl.innerHTML = `<img src="${poster}" alt="${title}">`;
 
-        // Overview
         if (overview) {
             const box = document.getElementById('show-overview-box');
             const txt = document.getElementById('show-overview-text');
@@ -220,7 +238,7 @@ async function loadShowInfo() {
 
         if (TYPE === 'tv') totalSeasons = d.number_of_seasons || 1;
 
-    } catch (err) { console.error('Show info:', err); }
+    } catch(err) { console.error('showInfo:', err); }
 }
 
 // ==========================================
@@ -264,7 +282,7 @@ window.changeSeason = async (num) => {
     currentE = 1;
     updateSeasonChips();
     await loadEpisodes(num);
-    updatePlayer();
+    await updatePlayer();
 };
 
 async function loadEpisodes(num) {
@@ -289,28 +307,28 @@ function renderEpisodes(episodes) {
     if (!grid) return;
 
     grid.innerHTML = episodes.map(epi => {
-        const playing = epi.episode_number === currentE;
+        const isPlaying = epi.episode_number === currentE;
         const thumb = epi.still_path
             ? `https://image.tmdb.org/t/p/w300${epi.still_path}`
-            : `https://via.placeholder.com/300x169/0d0d18/5a5548?text=EP+${epi.episode_number}`;
+            : `https://via.placeholder.com/300x169/0c0c1a/524e3e?text=EP+${epi.episode_number}`;
         const runtime = epi.runtime ? `${epi.runtime}m` : '';
         const rating  = epi.vote_average ? `⭐ ${epi.vote_average.toFixed(1)}` : '';
 
         return `
-        <div class="episode-card ${playing ? 'playing' : ''}"
+        <div class="episode-card ${isPlaying ? 'playing' : ''}"
              onclick="window.playEpisode(${epi.episode_number})">
             <div class="epi-thumb-wrap">
                 <img class="epi-thumb" src="${thumb}" loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300x169/0d0d18/5a5548?text=No+Preview'">
+                     onerror="this.src='https://via.placeholder.com/300x169/0c0c1a/524e3e?text=No+Preview'">
                 <div class="epi-play-overlay">
                     <div class="epi-play-btn">
                         <svg width="10" height="12" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg>
                     </div>
                 </div>
-                ${playing ? '<span class="playing-tag">▶ NOW PLAYING</span>' : ''}
+                ${isPlaying ? '<span class="playing-tag">▶ NOW PLAYING</span>' : ''}
             </div>
             <div class="epi-info">
-                <span class="epi-num">EPISODE ${epi.episode_number}</span>
+                <span class="epi-num">EP ${String(epi.episode_number).padStart(2,'0')}</span>
                 <span class="epi-title">${epi.name || `Episode ${epi.episode_number}`}</span>
                 <span class="epi-meta">
                     ${runtime ? `<span>${runtime}</span>` : ''}
@@ -320,17 +338,18 @@ function renderEpisodes(episodes) {
         </div>`;
     }).join('');
 
-    // Auto scroll to playing
+    // Scroll to playing episode
     setTimeout(() => {
         const playing = grid.querySelector('.playing');
         if (playing) playing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 150);
+    }, 200);
 }
 
-window.playEpisode = (num) => {
+// KEY FIX: playEpisode updates currentE THEN calls updatePlayer
+window.playEpisode = async (num) => {
     currentE = num;
-    updatePlayer();
-    renderEpisodes(allEpisodesData);
+    renderEpisodes(allEpisodesData); // Update UI immediately
+    await updatePlayer();            // Then update player with new episode
 };
 
 function switchServer(s) {
@@ -355,7 +374,6 @@ document.getElementById('search-input')?.addEventListener('input', (e) => {
         dd.innerHTML = '';
         return;
     }
-
     dd.classList.add('show');
     dd.innerHTML = '<div class="s-loading">Searching...</div>';
     searchTimer = setTimeout(() => doSearch(q), 350);
@@ -391,17 +409,17 @@ async function doSearch(query) {
         }
 
         dd.innerHTML = items.map(item => {
-            const title = item.title || item.name || 'Unknown';
-            const year  = (item.release_date || item.first_air_date || '').substring(0, 4);
+            const title  = item.title || item.name || 'Unknown';
+            const year   = (item.release_date || item.first_air_date || '').substring(0, 4);
             const rating = item.vote_average ? `⭐ ${item.vote_average.toFixed(1)}` : '';
             return `
             <div class="s-result" onclick="goToPlayer(${item.id}, '${item.media_type}')">
                 <img src="https://image.tmdb.org/t/p/w92${item.poster_path}"
-                     onerror="this.src='https://via.placeholder.com/44x64/0d0d18/5a5548?text=?'"
+                     onerror="this.src='https://via.placeholder.com/44x64/0c0c1a/524e3e?text=?'"
                      alt="${title}">
                 <div class="s-result-info">
                     <div class="s-result-title">${title}</div>
-                    <div class="s-result-meta">${year}${rating ? ' · ' + rating : ''}</div>
+                    <div class="s-result-meta">${year}${rating ? ' · '+rating : ''}</div>
                 </div>
                 <span class="s-badge ${item.media_type}">${item.media_type === 'tv' ? 'TV' : 'Movie'}</span>
             </div>`;
@@ -420,12 +438,14 @@ window.goToPlayer = (id, type) => {
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     await loadShowInfo();
+
     if (TYPE === 'tv') {
         await initSeasons();
     } else {
         const col = document.getElementById('episodes-column');
         if (col) col.style.display = 'none';
     }
+
     updateEpTag();
-    updatePlayer();
+    await updatePlayer();
 });
